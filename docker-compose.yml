@@ -1,0 +1,14 @@
+version: '3.9'
+services:
+  postgres:
+    image: postgres:14-alpine
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_PASSWORD=12345
+      - POSTGRES_USER=postgresql
+      - POSTGRES_DB=dev
+    networks:
+      - dev
+networks:
+  dev:

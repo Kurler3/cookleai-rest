@@ -1,0 +1,179 @@
+// schema.prisma
+
+datasource db {
+  provider = "postgresql" // or "mysql" or any other supported database
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+
+model User {
+  id Int        @id @default(autoincrement())
+  email String  @unique
+  name String
+  avatar String
+  
+  // Cookbooks that the user has access to
+  cookbooks UsersOnCookBooks[]
+
+  // Liked recipes
+  likes      Recipe[]     @relation("RecipeLikes") // Gets the list of liked recipes for the user
+
+  // Updated cookbooks
+  updatedCookbooks CookBook[] @relation("UserUpdateCookbook")
+
+  // created cookbooks
+  createdCookbooks CookBook[] @relation("UserCreateCookbook")
+
+  // Updated recipes
+  updatedRecipes Recipe[] @relation("UserUpdateRecipe")
+
+  // Created Recipes
+  createdRecipes Recipe[] @relation("UserCreateRecipe")
+
+  followers  Follow[]     @relation("followers")
+  following  Follow[]     @relation("following")
+
+  blocked    BlockedUser[]  @relation("Blocked")
+  blockedBy  BlockedUser[]@relation("BlockedBy")
+
+  // CREATED AT AND UPDATED AT
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt()
+
+  // MAP
+  @@map("users")
+}
+
+model CookBook {
+  id Int        @id @default(autoincrement())
+  title String
+  isPrivate Boolean
+
+  // Users
+  users UsersOnCookBooks[]
+
+  // RECIPES
+  recipes CookBookToRecipes[]
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt()
+
+  // Updated by and created by
+  updatedBy Int 
+  updatedByUser User @relation("UserUpdateCookbook", fields: [updatedBy], references: [id])
+  createdBy Int
+  createdByUser User @relation("UserCreateCookbook", fields: [createdBy], references: [id])
+
+  // Map
+  @@map("cookbooks")
+}
+
+model Recipe {
+
+  id Int        @id @default(autoincrement())
+  title String
+  description String
+  isPublic Boolean
+  ingredients Ingredients[]
+  instructions String[]
+  likedBy      User[]       @relation("RecipeLikes") // List of users who liked this thang
+  cookbooks CookBookToRecipes[]
+
+  // Default fields
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt()
+
+  // Updated by and created by
+  updatedBy Int
+  updatedByUser User @relation("UserUpdateRecipe", fields: [updatedBy], references: [id])
+  createdBy Int
+  createdByUser User @relation("UserCreateRecipe", fields: [createdBy], references: [id])
+
+  @@map("recipes")
+}
+
+model Ingredients {
+  id Int        @id @default(autoincrement()) 
+  name String
+  quantity Float
+  unit String
+  recipeId Int
+  recipe Recipe @relation(fields: [recipeId], references: [id])
+  @@map("ingredients")
+}
+
+
+///////////////////////////////////////////////////////
+// ONE TO MANY RELATIONSHIP MODELS ////////////////////
+///////////////////////////////////////////////////////
+
+model Follow {
+  id         Int  @id @default(autoincrement())
+  followerId Int
+  followingId Int
+  follower   User @relation("followers", fields: [followerId], references: [id])
+  following  User @relation("following", fields: [followingId], references: [id])
+  
+  @@unique([followerId, followingId])
+  @@map("follow")
+}
+
+model BlockedUser {
+  id        Int  @id @default(autoincrement())
+  blockerId Int
+  blockedId Int
+  blocker   User @relation("BlockedBy", fields: [blockerId], references: [id])
+  blocked   User @relation("Blocked", fields: [blockedId], references: [id])
+  
+  @@unique([blockerId, blockedId])
+  @@index([blockedId])
+  @@map("blocked_user")
+}
+
+// Model for many-to-many relationship of cookbooks and recipes
+// Because a recipe can be in more than 1 cookbooks and
+// a cookbook will obviously have more than 1 recipe :)
+
+model CookBookToRecipes {
+  id Int @id @default(autoincrement())
+  cookbookId Int
+  cookbook CookBook     @relation(fields: [cookbookId], references: [id])
+  recipeId Int
+  recipe Recipe         @relation(fields: [recipeId], references: [id])
+  
+  // Extra fields on the relationship
+  addedAt DateTime @default(now())
+
+  @@unique([cookbookId, recipeId]) 
+  @@index([cookbookId])
+  @@map("cookbook_to_recipes")
+}
+
+
+// Model for many-to-many relationship of users with cookbooks
+// Because a cookbook can have many users (you can share it with others) 
+// and a user can have many cookbooks too!
+
+model UsersOnCookBooks {
+
+  id Int @id @default(autoincrement())
+
+  cookbook    CookBook     @relation(fields: [cookbookId],references: [id])
+  cookbookId  Int
+  user        User         @relation(fields: [userId], references: [id])
+  userId      Int
+
+  // Extra fields on the relationship
+  addedAt   DateTime     @default(now())
+  addedBy   Int
+
+  @@map("users_on_cookbooks")
+  @@unique([cookbookId, userId])
+  @@index([userId])
+}
+
