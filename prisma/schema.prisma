@@ -113,24 +113,22 @@ model Ingredients {
 ///////////////////////////////////////////////////////
 
 model Follow {
-  id         Int  @id @default(autoincrement())
   followerId Int
   followingId Int
   follower   User @relation("followers", fields: [followerId], references: [id])
   following  User @relation("following", fields: [followingId], references: [id])
   
-  @@unique([followerId, followingId])
+  @@id([followerId, followingId])
   @@map("follow")
 }
 
 model BlockedUser {
-  id        Int  @id @default(autoincrement())
   blockerId Int
   blockedId Int
   blocker   User @relation("BlockedBy", fields: [blockerId], references: [id])
   blocked   User @relation("Blocked", fields: [blockedId], references: [id])
   
-  @@unique([blockerId, blockedId])
+  @@id([blockerId, blockedId])
   @@index([blockedId])
   @@map("blocked_user")
 }
@@ -140,7 +138,6 @@ model BlockedUser {
 // a cookbook will obviously have more than 1 recipe :)
 
 model CookBookToRecipes {
-  id Int @id @default(autoincrement())
   cookbookId Int
   cookbook CookBook     @relation(fields: [cookbookId], references: [id])
   recipeId Int
@@ -149,7 +146,7 @@ model CookBookToRecipes {
   // Extra fields on the relationship
   addedAt DateTime @default(now())
 
-  @@unique([cookbookId, recipeId]) 
+  @@id([cookbookId, recipeId]) 
   @@index([cookbookId])
   @@map("cookbook_to_recipes")
 }
@@ -160,9 +157,6 @@ model CookBookToRecipes {
 // and a user can have many cookbooks too!
 
 model UsersOnCookBooks {
-
-  id Int @id @default(autoincrement())
-
   cookbook    CookBook     @relation(fields: [cookbookId],references: [id])
   cookbookId  Int
   user        User         @relation(fields: [userId], references: [id])
@@ -173,7 +167,7 @@ model UsersOnCookBooks {
   addedBy   Int
 
   @@map("users_on_cookbooks")
-  @@unique([cookbookId, userId])
+  @@id([cookbookId, userId])
   @@index([userId])
 }
 
