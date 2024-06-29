@@ -3,6 +3,8 @@ import { RecipeService } from './recipe.service';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { UpdateRecipeDto } from './dto/update-recipe.dto';
 import { JwtGuard } from 'src/auth/guard/jwt-auth.guard';
+import { GetUser } from 'src/user/decorator/user.decorator';
+import { User } from '@prisma/client';
 
 @UseGuards(JwtGuard)
 @Controller('recipes')
@@ -15,7 +17,7 @@ export class RecipeController {
   }
 
   @Get()
-  findAll() {
+  findAll(@GetUser() user: User) {
     return this.recipeService.findAll();
   }
 
