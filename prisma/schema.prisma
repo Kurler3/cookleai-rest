@@ -28,6 +28,9 @@ model User {
   // created cookbooks
   createdCookbooks CookBook[] @relation("UserCreateCookbook")
 
+  // Recipes
+  recipes UsersOnRecipes[] // Recipes that this user has been shared with
+
   // Updated recipes
   updatedRecipes Recipe[] @relation("UserUpdateRecipe")
 
@@ -84,6 +87,10 @@ model Recipe {
   likedBy      User[]       @relation("RecipeLikes") // List of users who liked this thang
   cookbooks CookBookToRecipes[]
 
+
+  users UsersOnRecipes[]
+
+
   // Default fields
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt()
@@ -111,6 +118,23 @@ model Ingredients {
 ///////////////////////////////////////////////////////
 // ONE TO MANY RELATIONSHIP MODELS ////////////////////
 ///////////////////////////////////////////////////////
+model UsersOnRecipes {
+
+  recipeId Int
+  recipe Recipe       @relation(fields: [recipeId], references: [id])
+  userId    Int
+  user      User      @relation(fields:[userId], references: [id])
+
+  role      String    
+
+  // Extra fields on the relationship
+  addedAt   DateTime     @default(now())
+  addedBy   Int
+
+  @@map("users_on_recipes")
+  @@id([recipeId, userId])
+  @@index([userId])
+}
 
 model Follow {
   followerId Int
@@ -161,6 +185,9 @@ model UsersOnCookBooks {
   cookbookId  Int
   user        User         @relation(fields: [userId], references: [id])
   userId      Int
+
+
+  role      String // editor or viewer
 
   // Extra fields on the relationship
   addedAt   DateTime     @default(now())
