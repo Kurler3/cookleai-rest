@@ -2,11 +2,15 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Strategy, VerifyCallback } from 'passport-google-oauth20';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { UserService } from 'src/user/user.service';
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
 
-  constructor(configService: ConfigService) {
+  constructor(
+    configService: ConfigService,
+    private userService: UserService,
+  ) {
     super({
       clientID: configService.get("GOOGLE_CLIENT_ID"),
       clientSecret: configService.get("GOOGLE_CLIENT_SECRET"),
@@ -23,20 +27,33 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     done: VerifyCallback,
   ): Promise<any> {
     
-    const { id, name, emails, photos } = profile;
+    const { name, emails, photos } = profile;
 
-    const user = {
-      provider: 'google',
-      providerId: id,
-      email: emails[0].value,
-      fullName: `${name.givenName} ${name.familyName}`,
-      firstName: name.givenName,
-      lastName: name.familyName,
-      picture: photos[0].value,
-    };
+    // Get user from db
+    let user = await this.userService.findByEmail(emails[0].value);
 
-    // Here if user by the same email doesn't exist => create it
+    // If no user found in db, create a new one in db
+    if(!user) {
 
+      try {
+        
+        // Create it
+        user = await this.userService.createUser({
+          email: emails[0].value,
+          firstName: name.givenName,
+          lastName: name.familyName,
+          fullName: `${name.givenName} ${name.familyName}`,
+          avatar:  photos[0].value,
+        })
+        
+      } catch (error) {
+
+        console.error('Error while creating user for the first time...', error);
+
+        done(error, null);
+      }
+
+    }
 
     // Return user from db
     done(null, user);

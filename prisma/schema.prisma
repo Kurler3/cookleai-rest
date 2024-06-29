@@ -13,7 +13,9 @@ generator client {
 model User {
   id Int        @id @default(autoincrement())
   email String  @unique
-  name String
+  firstName String
+  lastName String
+  fullName String
   avatar String
   
   // Cookbooks that the user has access to

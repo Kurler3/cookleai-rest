@@ -4,6 +4,7 @@ import { GetUser } from 'src/user/decorator/user.decorator';
 import { AuthService } from './auth.service';
 import { Response } from 'express';
 import { ConfigService } from '@nestjs/config';
+import { User } from '@prisma/client';
 
 @UseGuards(GoogleOAuthGuard)
 @Controller('auth')
@@ -13,7 +14,8 @@ export class AuthController {
         private authService: AuthService,
         private configService: ConfigService
     ) {}
-    // AUTH
+    
+    // Init Google OAuth
     @Get('google')
     async googleAuth() {}
 
@@ -21,7 +23,7 @@ export class AuthController {
     @Get('google-redirect')
     async googleAuthRedirect(
         @Res() res: Response,
-        @GetUser() user // Data that comes from the google strategy validate func
+        @GetUser() user: User // Data that comes from the google strategy validate func
     ) {
 
         try {
