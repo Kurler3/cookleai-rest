@@ -32,7 +32,7 @@ export class AuthController {
 
             const token = await this.authService.oauthLogin(user);
 
-            res.redirect(`${frontendUrl}/oauth?token=${token.accessToken}`);
+            res.redirect(`${frontendUrl}/oauth-redirect?token=${token.accessToken}`);
 
         } catch (error) {
             console.error('Error in /auth/google-redirect: ', error);
