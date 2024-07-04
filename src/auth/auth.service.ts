@@ -15,13 +15,28 @@ export class AuthService {
             }
         }
 
-        // Sign the jwt
-        const accessToken = await this.jwtService.signAsync(user);
+        const [
+            accessToken,
+            refreshToken,
+        ] = await Promise.all([
+            this.jwtService.signAsync(user, {
+                expiresIn: '15m',
+            }),
+            this.jwtService.signAsync(user, {
+                expiresIn: '7d',
+            })
+        ])
 
         return {
             accessToken,
-            refreshToken: '',
+            refreshToken,
         }
+    }
+
+    async refreshAccessToken(refreshToken: string | null) {
+
+        
+
     }
 
 }
