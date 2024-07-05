@@ -34,8 +34,11 @@ export class AuthService {
 
   async refreshAccessToken(refreshToken: string | null) {
     try {
-      console.log(refreshToken);
-
+      
+      if(!refreshToken) {
+        throw new UnauthorizedException('Missing refresh token');
+      }
+ 
       const payload = await this.jwtService.verifyAsync(refreshToken, {
         secret: this.configService.get('JWT_SECRET'),
       });
