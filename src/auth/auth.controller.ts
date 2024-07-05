@@ -34,6 +34,8 @@ export class AuthController {
 
             const tokens = await this.authService.oauthLogin(user);
 
+            console.log('Refresh token: ', tokens.refreshToken);
+
             // Set http only cookie
              // Set the refresh token as an HTTP-only cookie
             res.cookie('refreshToken', tokens.refreshToken, {

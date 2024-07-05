@@ -7,12 +7,11 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // Inject http only cookies
-  app.use(
-    cookieParser()
-  )
+  app.use(cookieParser())
 
   //enable cors
   app.enableCors({
+    credentials: true,
     origin: 'http://localhost:5173',
   });
 
