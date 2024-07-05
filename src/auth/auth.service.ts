@@ -35,6 +35,20 @@ export class AuthService {
 
     async refreshAccessToken(refreshToken: string | null) {
 
+        try {
+
+            const payload = await this.jwtService.verifyAsync(refreshToken);
+
+            const accessToken = await this.jwtService.signAsync(payload, {
+                expiresIn: '15m'
+            });
+
+            return accessToken;
+            
+        } catch (error) {
+            throw new Error('Invalid refresh token');
+        }
+        
         
 
     }

@@ -11,7 +11,7 @@
     "db:dev:restart": "npm run db:dev:rm && npm run db:dev:up && npm run db:dev:deploy",
     "db:dev:deploy": "npx prisma migrate deploy",
     "db:dev:up": "docker compose up postgres -d",
-    "db:dev:rm": "docker compose rm postgres",
+    "db:dev:rm": "docker compose rm postgres -f",
     "start": "nest start",
     "start:dev": "npm run db:dev:restart && nest start --watch",
     "start:debug": "nest start --debug --watch",

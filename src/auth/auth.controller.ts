@@ -56,13 +56,7 @@ export class AuthController {
     async refresh(
         @GetRefreshToken() refreshToken: string | null,
     ) {
-
-        if(!refreshToken) {
-            throw new UnauthorizedException('Invalid refresh token');
-        }
-
-        
-
+        return this.authService.refreshAccessToken(refreshToken);
     }
 
 
