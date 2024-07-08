@@ -57,6 +57,7 @@ model CookBook {
   id Int        @id @default(autoincrement())
   title String
   isPrivate Boolean
+  image String
 
   // Users
   users UsersOnCookBooks[]
@@ -84,6 +85,7 @@ model Recipe {
   title String
   description String
   isPublic Boolean
+  image String
   ingredients Ingredients[]
   instructions String[]
   likedBy      User[]       @relation("RecipeLikes") // List of users who liked this thang
