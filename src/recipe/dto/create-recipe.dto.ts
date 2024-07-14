@@ -1,4 +1,5 @@
-import { IsNotEmpty, IsNumber, IsOptional, IsString, IsUrl } from "class-validator";
+import { IsJSON, IsNotEmpty, IsNumber, IsOptional, IsString, IsUrl } from "class-validator";
+import { IIngredient, INutrients } from "src/types";
 
 export class CreateRecipeDto {
 
@@ -26,18 +27,45 @@ export class CreateRecipeDto {
     notes?: string
 
     @IsNumber()
-    @IsNotEmpty()
     @IsOptional()
     preTime?: number
 
     @IsNumber()
-    @IsNotEmpty()
     @IsOptional()
     cookTime?: number
+
+    @IsJSON()
+    @IsOptional()
+    nutrients?: INutrients;
 
     @IsString()
     @IsNotEmpty()
     @IsOptional()
-    
+    cuisine?: string;
+
+    @IsString()
+    @IsNotEmpty()
+    @IsOptional()
+    language?: string;
+
+    @IsString()
+    @IsNotEmpty()
+    @IsOptional()
+    difficulty?: string;
+
+    @IsNumber()
+    @IsNotEmpty()
+    @IsOptional()
+    rating?: number;
+
+    @IsJSON()
+    @IsNotEmpty()
+    @IsOptional()
+    ingredients?: IIngredient[];
+
+    @IsString()
+    @IsNotEmpty()
+    @IsOptional()
+    instructions?: string[];
 
 }

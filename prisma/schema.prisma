@@ -90,7 +90,7 @@ model Recipe {
   notes String?
   preTime Int?
   cookTime Int?
-  nutrients Json? // calories: Float, carbohydrates: Float, Protein: Float, Fat: Protein
+  nutrients Json? // calories: Float, carbohydrates: Float, Protein: Float, Fat: Float
   cuisine String?
   language String?
   difficulty String?

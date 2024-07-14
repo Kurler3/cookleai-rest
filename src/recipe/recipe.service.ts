@@ -2,14 +2,30 @@ import { Injectable } from '@nestjs/common';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { UpdateRecipeDto } from './dto/update-recipe.dto';
 import { PrismaService } from '../prisma/prisma.service';
+import { User } from '@prisma/client';
 
 @Injectable()
 export class RecipeService {
 
   constructor(private prismaService: PrismaService) {}
 
-  create(createRecipeDto: CreateRecipeDto) {
-    return 'This action adds a new recipe';
+  async create(userId: number, createRecipeDto: CreateRecipeDto) {
+    return await this.prismaService.recipe.create({
+      data: {
+        ...createRecipeDto,
+        isPublic: false, //?? Not public by default
+        createdByUser: {
+          connect: {
+            id: userId,
+          },
+        },
+        updatedByUser: {
+          connect: {
+            id: userId,
+          },
+        }
+      }
+    });
   }
 
   findAll() {
