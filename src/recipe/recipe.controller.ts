@@ -11,7 +11,7 @@ import { User } from '@prisma/client';
 export class RecipeController {
   constructor(private readonly recipeService: RecipeService) {}
 
-  @Post()
+  @Post('create')
   create(
     @GetUser('id', ParseIntPipe) userId: number,
     @Body() createRecipeDto: CreateRecipeDto
