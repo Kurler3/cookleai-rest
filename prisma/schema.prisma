@@ -83,17 +83,25 @@ model Recipe {
 
   id Int        @id @default(autoincrement())
   title String
-  description String
-  isPublic Boolean
-  image String
-  ingredients Ingredients[]
-  instructions String[]
+  description String?
+  isPublic Boolean @default(false)
+  image String?
+  servings String?
+  notes String?
+  preTime Int?
+  cookTime Int?
+  nutrients Json? // calories: Float, carbohydrates: Float, Protein: Float, Fat: Protein
+  cuisine String?
+  language String?
+  difficulty String?
+  rating Int?
+
+  ingredients Json[] @default([]) // name: String; quantity: Float, unit: String
+  instructions String[]  @default([])
   likedBy      User[]       @relation("RecipeLikes") // List of users who liked this thang
   cookbooks CookBookToRecipes[]
 
-
   users UsersOnRecipes[]
-
 
   // Default fields
   createdAt DateTime @default(now())
@@ -106,16 +114,6 @@ model Recipe {
   createdByUser User @relation("UserCreateRecipe", fields: [createdBy], references: [id])
 
   @@map("recipes")
-}
-
-model Ingredients {
-  id Int        @id @default(autoincrement()) 
-  name String
-  quantity Float
-  unit String
-  recipeId Int
-  recipe Recipe @relation(fields: [recipeId], references: [id])
-  @@map("ingredients")
 }
 
 
