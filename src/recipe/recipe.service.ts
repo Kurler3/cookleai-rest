@@ -69,7 +69,7 @@ export class RecipeService {
 
 
   // Get user recipes
-  async getUserRecipes(userId: number) {
+  async findMyRecipes(userId: number) {
 
     const userRecipePermissions = await this.prismaService.usersOnRecipes.findMany({
       where: {
@@ -80,7 +80,7 @@ export class RecipeService {
       },
     });
 
-    const userRecipes = userRecipePermissions.map((ur) => ur.recipe);
+    const userRecipes = userRecipePermissions.map((ur) => ({...ur.recipe, role: ur.role, addedAt: ur.addedAt}) );
 
     return userRecipes;
 

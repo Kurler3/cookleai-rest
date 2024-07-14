@@ -19,6 +19,12 @@ export class RecipeController {
     return this.recipeService.create(userId, createRecipeDto);
   }
 
+  @Get('my-recipes')
+  findMyRecipes(@GetUser('id', ParseIntPipe) userId: number) {
+    return this.recipeService.findMyRecipes(userId);
+  }
+
+
   @Get()
   findAll(@GetUser() user: User) {
     return this.recipeService.findAll();
