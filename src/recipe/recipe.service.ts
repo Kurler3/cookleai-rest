@@ -77,7 +77,13 @@ export class RecipeService {
       },
       include: {
         recipe: {
-          include: {
+          select: {
+            id: true,
+            title: true,
+            image: true,
+            isPublic: true,
+            createdAt: true,
+            updatedAt: true,
             createdByUser: true,
           },
         },
