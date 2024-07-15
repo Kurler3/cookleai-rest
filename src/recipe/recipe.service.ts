@@ -42,7 +42,7 @@ export class RecipeService {
               id: newRecipe.id,
             }
           },
-          role: RECIPE_ROLES.ADMIN,
+          role: RECIPE_ROLES.OWNER,
           addedBy: userId,
         }
     })
@@ -76,7 +76,11 @@ export class RecipeService {
         userId,
       },
       include: {
-        recipe: true,
+        recipe: {
+          include: {
+            createdByUser: true,
+          },
+        },
       },
     });
 

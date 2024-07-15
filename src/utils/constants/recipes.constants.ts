@@ -2,7 +2,7 @@
 
 
 export const RECIPE_ROLES = {
-    ADMIN: 'ADMIN',
+    OWNER: 'OWNER',
     EDITOR: 'EDITOR',
     VIEWER: 'VIEWER'
 }

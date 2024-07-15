@@ -38,7 +38,7 @@ export class UserService {
 
     // Get all recipes for a given user
     async getUserRecipes(userId: number) {
-        return this.recipeService.getUserRecipes(userId);
+        return this.recipeService.findMyRecipes(userId);
     }
 
 }

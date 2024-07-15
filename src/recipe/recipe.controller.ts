@@ -25,21 +25,26 @@ export class RecipeController {
   }
 
 
+  //TODO: Get public recipes
   @Get()
   findAll(@GetUser() user: User) {
     return this.recipeService.findAll();
   }
+  
 
+  //TODO: Get detailed recipe
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.recipeService.findOne(+id);
   }
 
+  //TODO: Update recipe
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateRecipeDto: UpdateRecipeDto) {
     return this.recipeService.update(+id, updateRecipeDto);
   }
 
+  //TODO: Delete recipe
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.recipeService.remove(+id);
