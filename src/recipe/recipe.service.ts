@@ -3,6 +3,9 @@ import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { UpdateRecipeDto } from './dto/update-recipe.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { RECIPE_ROLES } from 'src/utils/constants';
+import { IPagination } from 'src/types';
+import { Prisma, UsersOnRecipes } from '@prisma/client';
+import { Recipe } from './entities/recipe.entity';
 
 @Injectable()
 export class RecipeService {
@@ -69,9 +72,9 @@ export class RecipeService {
 
 
   // Get user recipes
-  async findMyRecipes(userId: number) {
+  async findMyRecipes(userId: number, pagination?: IPagination) {
 
-    const userRecipePermissions = await this.prismaService.usersOnRecipes.findMany({
+    const queryParams: Prisma.UsersOnRecipesFindManyArgs = {
       where: {
         userId,
       },
@@ -88,9 +91,16 @@ export class RecipeService {
           },
         },
       },
-    });
+    }
+    console.log({pagination})
+    if(pagination) {
+      queryParams.skip = pagination.page * pagination.limit;
+      queryParams.take = pagination.limit;
+    }
+  
+    const userRecipePermissions = await this.prismaService.usersOnRecipes.findMany(queryParams);
 
-    const userRecipes = userRecipePermissions.map((ur) => ({...ur.recipe, role: ur.role, addedAt: ur.addedAt}) );
+    const userRecipes = userRecipePermissions.map((ur: UsersOnRecipes & { recipe: Recipe }) => ({...ur.recipe, role: ur.role, addedAt: ur.addedAt}) );
 
     return userRecipes;
 

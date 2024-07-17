@@ -5,6 +5,8 @@ import { UpdateRecipeDto } from './dto/update-recipe.dto';
 import { JwtGuard } from 'src/auth/guard/jwt-auth.guard';
 import { GetUser } from 'src/user/decorator/user.decorator';
 import { User } from '@prisma/client';
+import { GetPagination } from 'src/utils/decorators/pagination.decorator';
+import { IPagination } from 'src/types';
 
 @UseGuards(JwtGuard)
 @Controller('recipes')
@@ -20,8 +22,11 @@ export class RecipeController {
   }
 
   @Get('my-recipes')
-  findMyRecipes(@GetUser('id', ParseIntPipe) userId: number) {
-    return this.recipeService.findMyRecipes(userId);
+  findMyRecipes(
+    @GetUser('id', ParseIntPipe) userId: number,
+    @GetPagination() pagination?: IPagination,
+  ) {
+    return this.recipeService.findMyRecipes(userId, pagination);
   }
 
 
