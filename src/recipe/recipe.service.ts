@@ -84,10 +84,6 @@ export class RecipeService {
     return {...recipe, role};
   }
 
-  update(id: number, updateRecipeDto: UpdateRecipeDto) {
-    return `This action updates a #${id} recipe`;
-  }
-
   async remove(userId: number, recipeId: number) {
     const role = await this.getUserRoleOnRecipe(userId, recipeId);
 
@@ -141,4 +137,10 @@ export class RecipeService {
     return userRecipes;
 
   }
+
+  //TODO Update
+  update(id: number, updateRecipeDto: UpdateRecipeDto) {
+    return `This action updates a #${id} recipe`;
+  }
+
 }

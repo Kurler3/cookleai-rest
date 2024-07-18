@@ -123,9 +123,9 @@ model Recipe {
 model UsersOnRecipes {
 
   recipeId Int
-  recipe Recipe       @relation(fields: [recipeId], references: [id])
+  recipe Recipe       @relation(fields: [recipeId], references: [id], onDelete: Cascade)
   userId    Int
-  user      User      @relation(fields:[userId], references: [id])
+  user      User      @relation(fields:[userId], references: [id], onDelete: Cascade)
 
   role      String    
 
