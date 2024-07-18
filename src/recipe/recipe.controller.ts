@@ -28,13 +28,6 @@ export class RecipeController {
   ) {
     return this.recipeService.findMyRecipes(userId, pagination);
   }
-
-
-  // //TODO: Get public recipes
-  // @Get()
-  // findAll(@GetUser() user: User) {
-  //   return this.recipeService.findAll();
-  // }
   
   // Get detailed recipe data.
   @Get(':recipeId')
@@ -45,15 +38,19 @@ export class RecipeController {
     return this.recipeService.findOne(userId, +recipeId);
   }
 
+  // Delete recipe
+  @Delete(':id')
+  remove(
+    @GetUser('id') userId: number,
+    @Param('id') id: string,
+  ) {
+    return this.recipeService.remove(userId, +id);
+  }
+
   //TODO: Update recipe
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateRecipeDto: UpdateRecipeDto) {
     return this.recipeService.update(+id, updateRecipeDto);
   }
-
-  //TODO: Delete recipe
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.recipeService.remove(+id);
-  }
+  //TODO: Find public recipes (for explore page)
 }

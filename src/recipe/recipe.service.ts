@@ -54,10 +54,7 @@ export class RecipeService {
 
   }
 
-
-  async findOne(userId: number, recipeId: number) {
-    
-    // Check if this user has a permission in this recipe.
+  async getUserRoleOnRecipe(userId: number, recipeId: number) {
     const userPermission = await this.prismaService.usersOnRecipes.findFirst({
       where: {
         userId,
@@ -65,10 +62,16 @@ export class RecipeService {
       },
     });
 
-    // If the user doesn't have a permission on this recipe => throw error
     if(!userPermission) {
       throw new UnauthorizedException('You do not have permission to view this recipe');
     }
+
+    return userPermission.role;
+  }
+
+  async findOne(userId: number, recipeId: number) {
+    
+    const role = await this.getUserRoleOnRecipe(userId, recipeId);
 
     // Get the recipe
     const recipe = await this.prismaService.recipe.findUnique({
@@ -78,15 +81,29 @@ export class RecipeService {
     });
 
     // Return the recipe, along with the role of this user in the recipe
-    return {...recipe, role: userPermission.role};
+    return {...recipe, role};
   }
 
   update(id: number, updateRecipeDto: UpdateRecipeDto) {
     return `This action updates a #${id} recipe`;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} recipe`;
+  async remove(userId: number, recipeId: number) {
+    const role = await this.getUserRoleOnRecipe(userId, recipeId);
+
+    if(role !== RECIPE_ROLES.OWNER) {
+      throw new UnauthorizedException('You do not have permission to delete this recipe');
+    }
+
+    await this.prismaService.recipe.delete({
+      where: {
+        id: recipeId,
+      },
+    });
+
+    return {
+      message: 'Recipe deleted successfully'
+    }
   }
 
 
