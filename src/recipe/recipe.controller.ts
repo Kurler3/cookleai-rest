@@ -30,17 +30,19 @@ export class RecipeController {
   }
 
 
-  //TODO: Get public recipes
-  @Get()
-  findAll(@GetUser() user: User) {
-    return this.recipeService.findAll();
-  }
+  // //TODO: Get public recipes
+  // @Get()
+  // findAll(@GetUser() user: User) {
+  //   return this.recipeService.findAll();
+  // }
   
-
-  //TODO: Get detailed recipe
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.recipeService.findOne(+id);
+  // Get detailed recipe data.
+  @Get(':recipeId')
+  findOne(
+    @GetUser('id') userId: number,
+    @Param('recipeId') recipeId: string,
+  ) {
+    return this.recipeService.findOne(userId, +recipeId);
   }
 
   //TODO: Update recipe

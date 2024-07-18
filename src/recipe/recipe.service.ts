@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { UpdateRecipeDto } from './dto/update-recipe.dto';
 import { PrismaService } from '../prisma/prisma.service';
@@ -54,12 +54,31 @@ export class RecipeService {
 
   }
 
-  findAll() {
-    return `This action returns all recipe`;
-  }
 
-  findOne(id: number) {
-    return `This action returns a #${id} recipe`;
+  async findOne(userId: number, recipeId: number) {
+    
+    // Check if this user has a permission in this recipe.
+    const userPermission = await this.prismaService.usersOnRecipes.findFirst({
+      where: {
+        userId,
+        recipeId,
+      },
+    });
+
+    // If the user doesn't have a permission on this recipe => throw error
+    if(!userPermission) {
+      throw new UnauthorizedException('You do not have permission to view this recipe');
+    }
+
+    // Get the recipe
+    const recipe = await this.prismaService.recipe.findUnique({
+      where: {
+        id: recipeId,
+      },
+    });
+
+    // Return the recipe, along with the role of this user in the recipe
+    return {...recipe, role: userPermission.role};
   }
 
   update(id: number, updateRecipeDto: UpdateRecipeDto) {
