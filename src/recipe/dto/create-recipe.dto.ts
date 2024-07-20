@@ -1,4 +1,4 @@
-import { IsJSON, IsNotEmpty, IsNumber, IsOptional, IsString, IsUrl } from "class-validator";
+import { IsBoolean, IsJSON, IsNotEmpty, IsNumber, IsOptional, IsString, IsUrl } from "class-validator";
 import { IIngredient, INutrients } from "src/types";
 
 export class CreateRecipeDto {
@@ -15,6 +15,10 @@ export class CreateRecipeDto {
     @IsUrl()
     @IsOptional()
     image?: string
+
+    @IsBoolean()
+    @IsOptional()
+    isPublic?: boolean;
 
     @IsString()
     @IsNotEmpty()

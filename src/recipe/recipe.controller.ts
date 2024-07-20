@@ -7,6 +7,10 @@ import { GetUser } from 'src/user/decorator/user.decorator';
 import { User } from '@prisma/client';
 import { GetPagination } from 'src/utils/decorators/pagination.decorator';
 import { IPagination } from 'src/types';
+import { RecipeRolesGuard } from './guards/recipeRoles.guard';
+import { Roles } from 'src/decorators/roles.decorator';
+import { RECIPE_ROLES } from 'src/utils/constants';
+import { GetRole } from 'src/decorators/getRole.decorator';
 
 @UseGuards(JwtGuard)
 @Controller('recipes')
@@ -30,27 +34,36 @@ export class RecipeController {
   }
   
   // Get detailed recipe data.
+  @UseGuards(RecipeRolesGuard)
   @Get(':recipeId')
   findOne(
-    @GetUser('id') userId: number,
     @Param('recipeId') recipeId: string,
+    @GetRole() role: string,
   ) {
-    return this.recipeService.findOne(userId, +recipeId);
+    return this.recipeService.findOne(+recipeId, role);
   }
 
   // Delete recipe
-  @Delete(':id')
+  @UseGuards(RecipeRolesGuard)
+  @Roles([RECIPE_ROLES.OWNER])
+  @Delete(':recipeId')
   remove(
-    @GetUser('id') userId: number,
-    @Param('id') id: string,
+    @Param('recipeId') recipeId: string,
   ) {
-    return this.recipeService.remove(userId, +id);
+    return this.recipeService.remove(+recipeId);
   }
 
-  //TODO: Update recipe
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateRecipeDto: UpdateRecipeDto) {
-    return this.recipeService.update(+id, updateRecipeDto);
+  // Update recipe
+  @UseGuards(RecipeRolesGuard)
+  @Roles([RECIPE_ROLES.OWNER, RECIPE_ROLES.EDITOR])
+  @Patch(':recipeId')
+  update(
+    @Param('recipeId') recipeId: string, 
+    @Body() updateRecipeDto: UpdateRecipeDto,
+    @GetRole() role: string,
+  ) {
+    return this.recipeService.update(+recipeId, updateRecipeDto, role);
   }
+
   //TODO: Find public recipes (for explore page)
 }

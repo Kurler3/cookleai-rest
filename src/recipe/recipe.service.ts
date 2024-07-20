@@ -69,9 +69,7 @@ export class RecipeService {
     return userPermission.role;
   }
 
-  async findOne(userId: number, recipeId: number) {
-    
-    const role = await this.getUserRoleOnRecipe(userId, recipeId);
+  async findOne(recipeId: number, role: string) {
 
     // Get the recipe
     const recipe = await this.prismaService.recipe.findUnique({
@@ -84,13 +82,8 @@ export class RecipeService {
     return {...recipe, role};
   }
 
-  async remove(userId: number, recipeId: number) {
-    const role = await this.getUserRoleOnRecipe(userId, recipeId);
-
-    if(role !== RECIPE_ROLES.OWNER) {
-      throw new UnauthorizedException('You do not have permission to delete this recipe');
-    }
-
+  async remove(recipeId: number) {
+   
     await this.prismaService.recipe.delete({
       where: {
         id: recipeId,
@@ -124,7 +117,7 @@ export class RecipeService {
         },
       },
     }
-    console.log({pagination})
+   
     if(pagination) {
       queryParams.skip = pagination.page * pagination.limit;
       queryParams.take = pagination.limit;
@@ -138,9 +131,30 @@ export class RecipeService {
 
   }
 
-  //TODO Update
-  update(id: number, updateRecipeDto: UpdateRecipeDto) {
-    return `This action updates a #${id} recipe`;
+  // Update
+  async update(
+    recipeId: number, 
+    updateRecipeDto: UpdateRecipeDto,
+    role: string,
+  ) {
+
+    console.log('updateRecipeDto', updateRecipeDto)
+
+    const updatedRecipe = await this.prismaService.recipe.update({
+      where: {
+        id: recipeId,
+      },
+      data: updateRecipeDto,
+      include: {
+        createdByUser: true,
+      }
+    });
+
+    return {
+      ...updatedRecipe,
+      role,
+    }
+
   }
 
 }
