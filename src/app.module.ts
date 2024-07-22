@@ -20,7 +20,7 @@ import { CookbookModule } from './cookbook/cookbook.module';
     RecipeModule,
     CookbookModule
   ],
-  controllers: [AppController, CookbookController],
+  controllers: [AppController],
   providers: [AppService],
 })
 export class AppModule {}
