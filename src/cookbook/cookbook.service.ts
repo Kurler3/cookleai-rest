@@ -5,6 +5,7 @@ import { IPagination } from 'src/types';
 import { Prisma, UsersOnCookBooks } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Cookbook } from './entities/cookbook.entity';
+import { COOKBOOK_ROLES } from 'src/utils/constants';
 
 @Injectable()
 export class CookbookService {
@@ -13,27 +14,41 @@ export class CookbookService {
   constructor(private prismaService: PrismaService) {}
 
 
-  create(createCookbookDto: CreateCookbookDto) {
-    return 'This action adds a new cookbook';
+  async create(userId: number, createCookbookDto: CreateCookbookDto) {
+    
+    // Create a cookbook
+    const cookbook = await this.prismaService.cookBook.create({ 
+      data: {
+        ...createCookbookDto,
+        createdByUser: {
+          connect: {
+            id: userId,
+          },
+        },
+        updatedByUser: {
+          connect: {
+            id: userId,
+          },
+        },
+      } 
+    });
+
+    // Create a permission on the cookbook
+    await this.prismaService.usersOnCookBooks.create({
+      data: {
+        user: {
+          connect: { id: userId },
+        },
+        cookbook: {
+          connect: { id: cookbook.id },
+        },
+        role: COOKBOOK_ROLES.OWNER,
+        addedAt: new Date(),
+        addedBy: userId,
+      }
+    });
+
   }
-
-  findAll() {
-    return `This action returns all cookbook`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} cookbook`;
-  }
-
-  update(id: number, updateCookbookDto: UpdateCookbookDto) {
-    return `This action updates a #${id} cookbook`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} cookbook`;
-  }
-
-
 
   async getMyCookbooks(
     userId: number, 
@@ -64,14 +79,33 @@ export class CookbookService {
       queryParams.take = pagination.limit;
     }
   
-    const userRecipePermissions = await this.prismaService.usersOnCookBooks.findMany(queryParams);
+    const userCookbookPermissions = await this.prismaService.usersOnCookBooks.findMany(queryParams);
 
-    const userRecipes = userRecipePermissions.map(
+    const userCookbooks = userCookbookPermissions.map(
       (ur: UsersOnCookBooks & { cookbook: Cookbook }) => ({...ur.cookbook, role: ur.role, addedAt: ur.addedAt}) 
     );
 
-    return userRecipes;
-
+    return userCookbooks;
   } 
+
+  //TODO: Find PUBLIC cookbooks
+  findAll() {
+    return `This action returns all cookbook`;
+  }
+
+  //TODO: Get detailed cookbook? 
+  findOne(id: number) {
+    return `This action returns a #${id} cookbook`;
+  }
+
+  //TODO: Update cookbook
+  update(id: number, updateCookbookDto: UpdateCookbookDto) {
+    return `This action updates a #${id} cookbook`;
+  }
+
+  //TODO: Delete cookbook
+  remove(id: number) {
+    return `This action removes a #${id} cookbook`;
+  }
 
 }

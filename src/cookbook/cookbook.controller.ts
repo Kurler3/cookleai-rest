@@ -11,8 +11,11 @@ export class CookbookController {
   constructor(private readonly cookbookService: CookbookService) {}
 
   @Post()
-  create(@Body() createCookbookDto: CreateCookbookDto) {
-    return this.cookbookService.create(createCookbookDto);
+  create(
+    @GetUser('id') userId: number,
+    @Body() createCookbookDto: CreateCookbookDto,
+  ) {
+    return this.cookbookService.create(userId, createCookbookDto);
   }
 
   @Get('my-cookbooks')
@@ -25,18 +28,23 @@ export class CookbookController {
     );
   }
 
+  //TODO
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.cookbookService.findOne(+id);
   }
 
+  //TODO
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateCookbookDto: UpdateCookbookDto) {
     return this.cookbookService.update(+id, updateCookbookDto);
   }
 
+  //TODO
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.cookbookService.remove(+id);
   }
+
+  //TODO Find public
 }
