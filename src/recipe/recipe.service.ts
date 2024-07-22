@@ -4,8 +4,7 @@ import { UpdateRecipeDto } from './dto/update-recipe.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { RECIPE_ROLES } from 'src/utils/constants';
 import { IPagination } from 'src/types';
-import { Prisma, UsersOnRecipes } from '@prisma/client';
-import { Recipe } from './entities/recipe.entity';
+import { Prisma, Recipe, UsersOnRecipes } from '@prisma/client';
 
 @Injectable()
 export class RecipeService {
@@ -137,8 +136,6 @@ export class RecipeService {
     updateRecipeDto: UpdateRecipeDto,
     role: string,
   ) {
-
-    console.log('updateRecipeDto', updateRecipeDto)
 
     const updatedRecipe = await this.prismaService.recipe.update({
       where: {

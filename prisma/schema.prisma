@@ -56,8 +56,8 @@ model User {
 model CookBook {
   id Int        @id @default(autoincrement())
   title String
-  isPrivate Boolean
-  image String
+  isPublic Boolean @default(false)
+  image String?
 
   // Users
   users UsersOnCookBooks[]

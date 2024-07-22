@@ -6,6 +6,8 @@ import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { RecipeModule } from './recipe/recipe.module';
+import { CookbookController } from './cookbook/cookbook.controller';
+import { CookbookModule } from './cookbook/cookbook.module';
 
 @Module({
   imports: [
@@ -15,9 +17,10 @@ import { RecipeModule } from './recipe/recipe.module';
     PrismaModule,
     AuthModule,
     UserModule,
-    RecipeModule
+    RecipeModule,
+    CookbookModule
   ],
-  controllers: [AppController],
+  controllers: [AppController, CookbookController],
   providers: [AppService],
 })
 export class AppModule {}
