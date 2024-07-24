@@ -65,5 +65,8 @@ export class RecipeController {
     return this.recipeService.update(+recipeId, updateRecipeDto, role);
   }
 
+  // Upload image
+  @Post(':recipeId/upload-image')
+
   //TODO: Find public recipes (for explore page)
 }
