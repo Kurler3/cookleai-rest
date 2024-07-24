@@ -69,6 +69,8 @@ export class RecipeController {
 
   // Upload image
   @Post(':recipeId/upload-image')
+  @UseGuards(RecipeRolesGuard)
+  @Roles([RECIPE_ROLES.OWNER, RECIPE_ROLES.EDITOR])
   @UseInterceptors(FileInterceptor('img'))
   uploadImage(
     @Param('recipeId', ParseIntPipe) recipeId: number,
@@ -84,11 +86,10 @@ export class RecipeController {
     ) img: Express.Multer.File,
   ) {
 
-    return {
-      data: img.buffer.toString()
-    }
-
-    // return this.recipeService.uploadImage(+recipeId, image);
+    return this.recipeService.editRecipeImage(
+      recipeId,
+      img,
+    )
   }
 
   //TODO: Find public recipes (for explore page)

@@ -5,11 +5,29 @@ import { PrismaService } from '../prisma/prisma.service';
 import { RECIPE_ROLES } from 'src/utils/constants';
 import { IPagination } from 'src/types';
 import { Prisma, Recipe, UsersOnRecipes } from '@prisma/client';
+import { SupabaseService } from 'src/supabase/supabase.service';
+import { v4 as uuid } from 'uuid';
 
 @Injectable()
 export class RecipeService {
 
-  constructor(private prismaService: PrismaService) {}
+  constructor(
+    private prismaService: PrismaService,
+    private supabaseService: SupabaseService,
+  ) {}
+
+
+  async updateRecipe(
+    recipeId: number, 
+    updateRecipeDto: UpdateRecipeDto,
+  ) {
+    return await this.prismaService.recipe.update({
+      where: {
+        id: recipeId,
+      },
+      data: updateRecipeDto,
+    });
+  }
 
   async create(userId: number, createRecipeDto: CreateRecipeDto) {
 
@@ -152,6 +170,46 @@ export class RecipeService {
       role,
     }
 
+  }
+
+
+  // Edit recipe image
+  async editRecipeImage(
+    recipeId: number,
+    img: Express.Multer.File,
+  ) {
+
+    // Get the recipe
+    const recipe = await this.prismaService.recipe.findUnique({
+      where: {
+        id: recipeId,
+      },
+    });
+
+    // If there was a previous image on the recipe => delete it.
+    if(recipe.image) {
+
+      //TODO: May need to extract the key from the public url
+
+      await this.supabaseService.deleteFile(recipe.image);
+    }
+
+    const newImageUrl = await this.supabaseService.uploadFile(
+      img,
+      `/recipes/${recipeId}/${uuid()}`,
+    );
+
+    // Update the recipe.
+    await this.updateRecipe(
+      recipeId,
+      {
+        image: newImageUrl,
+      }
+    )
+
+    return {
+      message: 'New image uploaded successfully!'
+    }
   }
 
 }
