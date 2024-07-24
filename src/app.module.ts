@@ -8,6 +8,7 @@ import { UserModule } from './user/user.module';
 import { RecipeModule } from './recipe/recipe.module';
 import { CookbookController } from './cookbook/cookbook.controller';
 import { CookbookModule } from './cookbook/cookbook.module';
+import { SupabaseModule } from './supabase/supabase.module';
 
 @Module({
   imports: [
@@ -18,7 +19,8 @@ import { CookbookModule } from './cookbook/cookbook.module';
     AuthModule,
     UserModule,
     RecipeModule,
-    CookbookModule
+    CookbookModule,
+    SupabaseModule
   ],
   controllers: [AppController],
   providers: [AppService],
