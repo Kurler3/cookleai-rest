@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, ParseIntPipe, UploadedFile, ParseFilePipe, FileTypeValidator, MaxFileSizeValidator, UseInterceptors } from '@nestjs/common';
 import { RecipeService } from './recipe.service';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { UpdateRecipeDto } from './dto/update-recipe.dto';
@@ -11,6 +11,8 @@ import { RecipeRolesGuard } from './guards/recipeRoles.guard';
 import { Roles } from 'src/decorators/roles.decorator';
 import { RECIPE_ROLES } from 'src/utils/constants';
 import { GetRole } from 'src/decorators/getRole.decorator';
+import { FileTypesValidator } from 'src/utils/pipes/fileTypes.pipe';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @UseGuards(JwtGuard)
 @Controller('recipes')
@@ -67,6 +69,27 @@ export class RecipeController {
 
   // Upload image
   @Post(':recipeId/upload-image')
+  @UseInterceptors(FileInterceptor('img'))
+  uploadImage(
+    @Param('recipeId', ParseIntPipe) recipeId: number,
+    @UploadedFile(
+      new FileTypesValidator(),
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ 
+            maxSize: 1024 * 1024 * 200 // 200MB, 1MB = 1024 KB, 1KB = 1024 B
+          }),
+        ]
+      })
+    ) img: Express.Multer.File,
+  ) {
+
+    return {
+      data: img.buffer.toString()
+    }
+
+    // return this.recipeService.uploadImage(+recipeId, image);
+  }
 
   //TODO: Find public recipes (for explore page)
 }
