@@ -191,12 +191,12 @@ export class RecipeService {
 
       //TODO: May need to extract the key from the public url
 
-      await this.supabaseService.deleteFile(recipe.image);
+      // await this.supabaseService.deleteFile(recipe.image);
     }
 
     const newImageUrl = await this.supabaseService.uploadFile(
       img,
-      `/recipes/${recipeId}/${uuid()}`,
+      `/recipes/${recipeId}`,
     );
 
     // Update the recipe.

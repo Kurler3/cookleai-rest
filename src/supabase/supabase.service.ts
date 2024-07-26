@@ -14,7 +14,7 @@ export class SupabaseService {
     if (!this.supabase) {
       this.supabase = createClient(
         this.configService.get('SUPABASE_URL'),
-        this.configService.get('SUPABASE_KEY'),
+        this.configService.get('SUPABASE_SERVICE_ROLE_KEY'),
       );
     }
 
@@ -33,15 +33,16 @@ export class SupabaseService {
   // Upload file and return the url
   async uploadFile(file: Express.Multer.File, path: string) {
     try {
-        console.log(file, this.imagesBucketName);
+        
       // Upload the file
       const { data, error } = await this.supabase.storage
         .from(this.imagesBucketName)
         .upload(
-            "test", 
+            path, 
             file.buffer, 
             {
                 contentType: file.mimetype,
+                upsert: true,
             }
         );
 
@@ -49,16 +50,14 @@ export class SupabaseService {
         throw new BadRequestException(`Error uploading file: ${error.message}`);
       }
 
-      return "hello"
+      // Get the public url
+      const {
+        data: { publicUrl },
+      } = this.supabase.storage
+        .from(this.imagesBucketName)
+        .getPublicUrl(data.path);
 
-    //   // Get the public url
-    //   const {
-    //     data: { publicUrl },
-    //   } = this.supabase.storage
-    //     .from(this.imagesBucketName)
-    //     .getPublicUrl(data.id);
-
-    //   return publicUrl;
+      return publicUrl;
     } catch (error) {
       this.logger.error(`Error uploading file: ${error.message}`);
       this.logger.error(error.stack);
