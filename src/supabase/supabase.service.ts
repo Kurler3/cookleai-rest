@@ -1,7 +1,6 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import toArrayBuffer from 'src/utils/functions/toArrayBuffer';
 
 @Injectable()
 export class SupabaseService {

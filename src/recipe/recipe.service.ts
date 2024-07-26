@@ -179,24 +179,22 @@ export class RecipeService {
     img: Express.Multer.File,
   ) {
 
-    // Get the recipe
     const recipe = await this.prismaService.recipe.findUnique({
       where: {
         id: recipeId,
-      },
+      }
     });
 
-    // If there was a previous image on the recipe => delete it.
     if(recipe.image) {
 
-      //TODO: May need to extract the key from the public url
+      const imageKey = recipe.image.split('/').slice(recipe.image.split('/').length - 3,).join('/');
 
-      // await this.supabaseService.deleteFile(recipe.image);
+      await this.supabaseService.deleteFile(imageKey)
     }
 
     const newImageUrl = await this.supabaseService.uploadFile(
       img,
-      `/recipes/${recipeId}`,
+      `/recipes/${recipeId}/${uuid()}`,
     );
 
     // Update the recipe.
@@ -208,7 +206,7 @@ export class RecipeService {
     )
 
     return {
-      message: 'New image uploaded successfully!'
+      data: newImageUrl,
     }
   }
 
