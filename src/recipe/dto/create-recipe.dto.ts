@@ -32,7 +32,7 @@ export class CreateRecipeDto {
 
     @IsNumber()
     @IsOptional()
-    preTime?: number
+    prepTime?: number
 
     @IsNumber()
     @IsOptional()
