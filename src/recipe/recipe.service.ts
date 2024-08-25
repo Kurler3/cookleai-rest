@@ -14,11 +14,14 @@ export class RecipeService {
   constructor(
     private prismaService: PrismaService,
     private supabaseService: SupabaseService,
-  ) {}
+  ) { }
 
+  getRecipeImageKey(recipeImage: string) {
+    return recipeImage.split('/').slice(recipeImage.split('/').length - 3,).join('/');
+  }
 
   async updateRecipe(
-    recipeId: number, 
+    recipeId: number,
     updateRecipeDto: UpdateRecipeDto,
   ) {
     return await this.prismaService.recipe.update({
@@ -32,7 +35,7 @@ export class RecipeService {
   async create(userId: number, createRecipeDto: CreateRecipeDto) {
 
     // Create a new recipe
-    const newRecipe =  await this.prismaService.recipe.create({
+    const newRecipe = await this.prismaService.recipe.create({
       data: {
         ...createRecipeDto,
         isPublic: false, //?? Not public by default
@@ -51,20 +54,20 @@ export class RecipeService {
 
     // Create ADMIn role for the user that created this recipe
     await this.prismaService.usersOnRecipes.create({
-        data: {
-          user: {
-            connect: {
-              id: userId,
-            }
-          },
-          recipe: {
-            connect: {
-              id: newRecipe.id,
-            }
-          },
-          role: RECIPE_ROLES.OWNER,
-          addedBy: userId,
-        }
+      data: {
+        user: {
+          connect: {
+            id: userId,
+          }
+        },
+        recipe: {
+          connect: {
+            id: newRecipe.id,
+          }
+        },
+        role: RECIPE_ROLES.OWNER,
+        addedBy: userId,
+      }
     })
 
     return newRecipe;
@@ -79,13 +82,14 @@ export class RecipeService {
       },
     });
 
-    if(!userPermission) {
+    if (!userPermission) {
       throw new UnauthorizedException('You do not have permission to view this recipe');
     }
 
     return userPermission.role;
   }
 
+  // Find recipe
   async findOne(recipeId: number, role: string) {
 
     // Get the recipe
@@ -96,11 +100,12 @@ export class RecipeService {
     });
 
     // Return the recipe, along with the role of this user in the recipe
-    return {...recipe, role};
+    return { ...recipe, role };
   }
 
+  // Delete recipe
   async remove(recipeId: number) {
-   
+
     await this.prismaService.recipe.delete({
       where: {
         id: recipeId,
@@ -134,26 +139,50 @@ export class RecipeService {
         },
       },
     }
-   
-    if(pagination) {
+
+    if (pagination) {
       queryParams.skip = pagination.page * pagination.limit;
       queryParams.take = pagination.limit;
     }
-  
+
     const userRecipePermissions = await this.prismaService.usersOnRecipes.findMany(queryParams);
 
-    const userRecipes = userRecipePermissions.map((ur: UsersOnRecipes & { recipe: Recipe }) => ({...ur.recipe, role: ur.role, addedAt: ur.addedAt}) );
+    const userRecipes = userRecipePermissions.map((ur: UsersOnRecipes & { recipe: Recipe }) => ({ ...ur.recipe, role: ur.role, addedAt: ur.addedAt }));
 
     return userRecipes;
 
   }
 
-  // Update
+  // Update recipe
   async update(
-    recipeId: number, 
+    recipeId: number,
     updateRecipeDto: UpdateRecipeDto,
     role: string,
   ) {
+
+    // If reset the image => delete from storage.
+    if (updateRecipeDto.image === null) {
+
+      // Get current recipe image (before updating)
+      const currentRecipe = await this.prismaService.recipe.findUnique({
+        where: {
+          id: recipeId,
+        },
+        select: {
+          image: true,
+        }
+      });
+
+      // If had an image prior to resetting it => delete it from storage.
+      if (currentRecipe.image) {
+
+        const imageKey = this.getRecipeImageKey(currentRecipe.image);
+
+        await this.supabaseService.deleteFile(imageKey);
+
+      }
+
+    }
 
     const updatedRecipe = await this.prismaService.recipe.update({
       where: {
@@ -185,7 +214,7 @@ export class RecipeService {
       }
     });
 
-    if(recipe.image) {
+    if (recipe.image) {
 
       const imageKey = recipe.image.split('/').slice(recipe.image.split('/').length - 3,).join('/');
 
@@ -196,7 +225,6 @@ export class RecipeService {
       img,
       `/recipes/${recipeId}/${uuid()}`,
     );
-
     // Update the recipe.
     await this.updateRecipe(
       recipeId,

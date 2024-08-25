@@ -10,8 +10,12 @@ export class FileTypesValidator implements PipeTransform {
     ];
 
     transform(
-        value: Express.Multer.File,
+        value?: Express.Multer.File,
     ) {
+
+        if(!value) {
+            throw new BadRequestException('File is required');
+        }
 
         const { mimetype } = value;
 

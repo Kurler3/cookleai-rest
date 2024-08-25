@@ -71,5 +71,4 @@ export class CreateRecipeDto {
     @IsNotEmpty()
     @IsOptional()
     instructions?: string[];
-
 }

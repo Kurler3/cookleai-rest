@@ -18,7 +18,7 @@ export class RecipeRolesGuard implements CanActivate {
 
     const request = context.switchToHttp().getRequest();
     const userId = request.user.id;
-    const recipeId = +request.params.recipeId; // Adjust based on your route parameters
+    const recipeId = +request.params.recipeId;
 
     const userPermission = await this.prismaService.usersOnRecipes.findFirst({
       where: {

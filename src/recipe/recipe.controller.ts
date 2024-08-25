@@ -1,10 +1,9 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, ParseIntPipe, UploadedFile, ParseFilePipe, FileTypeValidator, MaxFileSizeValidator, UseInterceptors } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, ParseIntPipe, UploadedFile, ParseFilePipe, MaxFileSizeValidator, UseInterceptors } from '@nestjs/common';
 import { RecipeService } from './recipe.service';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { UpdateRecipeDto } from './dto/update-recipe.dto';
 import { JwtGuard } from 'src/auth/guard/jwt-auth.guard';
 import { GetUser } from 'src/user/decorator/user.decorator';
-import { User } from '@prisma/client';
 import { GetPagination } from 'src/utils/decorators/pagination.decorator';
 import { IPagination } from 'src/types';
 import { RecipeRolesGuard } from './guards/recipeRoles.guard';
