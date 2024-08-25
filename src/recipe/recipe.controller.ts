@@ -7,12 +7,12 @@ import { GetUser } from 'src/user/decorator/user.decorator';
 import { GetPagination } from 'src/utils/decorators/pagination.decorator';
 import { IPagination, ISelection } from 'src/types';
 import { RecipeRolesGuard } from './guards/recipeRoles.guard';
-import { Roles } from 'src/decorators/roles.decorator';
 import { RECIPE_ROLES } from 'src/utils/constants';
 import { GetRole } from 'src/decorators/getRole.decorator';
 import { FileTypesValidator } from 'src/utils/pipes/fileTypes.pipe';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { GetSelection } from 'src/utils/decorators/selector.decorator';
+import { RecipeRoles } from 'src/decorators/RecipeRoles.decorator';
 
 @UseGuards(JwtGuard)
 @Controller('recipes')
@@ -50,7 +50,7 @@ export class RecipeController {
 
   // Delete recipe
   @UseGuards(RecipeRolesGuard)
-  @Roles([RECIPE_ROLES.OWNER])
+  @RecipeRoles([RECIPE_ROLES.OWNER])
   @Delete(':recipeId')
   remove(
     @Param('recipeId') recipeId: string,
@@ -60,7 +60,7 @@ export class RecipeController {
 
   // Update recipe
   @UseGuards(RecipeRolesGuard)
-  @Roles([RECIPE_ROLES.OWNER, RECIPE_ROLES.EDITOR])
+  @RecipeRoles([RECIPE_ROLES.OWNER, RECIPE_ROLES.EDITOR])
   @Patch(':recipeId')
   update(
     @Param('recipeId') recipeId: string, 
@@ -73,7 +73,7 @@ export class RecipeController {
   // Upload image
   @Post(':recipeId/upload-image')
   @UseGuards(RecipeRolesGuard)
-  @Roles([RECIPE_ROLES.OWNER, RECIPE_ROLES.EDITOR])
+  @RecipeRoles([RECIPE_ROLES.OWNER, RECIPE_ROLES.EDITOR])
   @UseInterceptors(FileInterceptor('img'))
   uploadImage(
     @Param('recipeId', ParseIntPipe) recipeId: number,

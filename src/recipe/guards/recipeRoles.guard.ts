@@ -2,7 +2,7 @@
 
 import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { Roles } from 'src/decorators/roles.decorator';
+import { RecipeRoles } from 'src/decorators/RecipeRoles.decorator';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
@@ -14,7 +14,7 @@ export class RecipeRolesGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     
-    const roles = this.reflector.get<string[]>(Roles, context.getHandler());
+    const roles = this.reflector.get<string[]>(RecipeRoles, context.getHandler());
 
     const request = context.switchToHttp().getRequest();
     const userId = request.user.id;

@@ -12,7 +12,7 @@ export class CookbookRolesGuard implements CanActivate {
     
       async canActivate(context: ExecutionContext): Promise<boolean> {
         
-        const roles = this.reflector.get<string[]>(Roles, context.getHandler());
+        const roles = this.reflector.get<string[]>(CookbookRolesGuard, context.getHandler());
     
         const request = context.switchToHttp().getRequest();
         const userId = request.user.id;

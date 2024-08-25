@@ -7,6 +7,11 @@ import { GetSelection } from 'src/utils/decorators/selector.decorator';
 import { GetSearchTerm } from 'src/utils/decorators/search.decorator';
 import { CreateCookbookDto } from './dto/create-cookbook.dto';
 import { JwtGuard } from 'src/auth/guard/jwt-auth.guard';
+import { CookbookRolesGuard } from './guards/cookbookRoles.guard';
+import { COOKBOOK_ROLES, RECIPE_ROLES } from 'src/utils/constants';
+import { RecipeRolesGuard } from 'src/recipe/guards/recipeRoles.guard';
+import { RecipeRoles } from 'src/decorators/RecipeRoles.decorator';
+import { CookbookRoles } from 'src/decorators/CookbookRoles.decorator';
 
 @UseGuards(JwtGuard)
 @Controller('cookbooks')
@@ -37,6 +42,26 @@ export class CookbookController {
       excludedRecipeId,
     );
   }
+
+  // Add recipe to cookbook
+  @UseGuards(CookbookRolesGuard)
+  @CookbookRoles([COOKBOOK_ROLES.OWNER, COOKBOOK_ROLES.EDITOR])
+  @UseGuards(RecipeRolesGuard)
+  @RecipeRoles([RECIPE_ROLES.OWNER, RECIPE_ROLES.EDITOR])
+  @Post(':cookbookId/recipes/:recipeId')
+  addRecipeToCookbook(
+    @GetUser('id') userId: number,
+    @Param('cookbookId') cookbookId: number,
+    @Param('recipeId') recipeId: number,
+  ) {
+
+    //TODO
+    return 'ok';
+    // return this.cookbookService.addRecipeToCookbook(userId, cookbookId, recipeId);
+  }
+
+  // Remove recipe from cookbook
+
 
   // //TODO
   // @Get(':id')
