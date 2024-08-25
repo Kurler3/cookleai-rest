@@ -9,6 +9,7 @@ export const GetPagination = createParamDecorator<{ page: number, limit: number 
         const limit = parseInt(request.query.limit as string) || 15;
 
         if(!page && !limit) return null;
+        
         return {
             page,
             limit,

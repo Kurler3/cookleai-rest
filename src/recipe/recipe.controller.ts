@@ -5,13 +5,14 @@ import { UpdateRecipeDto } from './dto/update-recipe.dto';
 import { JwtGuard } from 'src/auth/guard/jwt-auth.guard';
 import { GetUser } from 'src/user/decorator/user.decorator';
 import { GetPagination } from 'src/utils/decorators/pagination.decorator';
-import { IPagination } from 'src/types';
+import { IPagination, ISelection } from 'src/types';
 import { RecipeRolesGuard } from './guards/recipeRoles.guard';
 import { Roles } from 'src/decorators/roles.decorator';
 import { RECIPE_ROLES } from 'src/utils/constants';
 import { GetRole } from 'src/decorators/getRole.decorator';
 import { FileTypesValidator } from 'src/utils/pipes/fileTypes.pipe';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { GetSelection } from 'src/utils/decorators/selector.decorator';
 
 @UseGuards(JwtGuard)
 @Controller('recipes')
@@ -31,7 +32,10 @@ export class RecipeController {
     @GetUser('id', ParseIntPipe) userId: number,
     @GetPagination() pagination?: IPagination,
   ) {
-    return this.recipeService.findMyRecipes(userId, pagination);
+    return this.recipeService.findMyRecipes(
+      userId, 
+      pagination, 
+    );
   }
   
   // Get detailed recipe data.

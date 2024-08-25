@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { CreateCookbookDto } from './dto/create-cookbook.dto';
 import { UpdateCookbookDto } from './dto/update-cookbook.dto';
-import { IPagination } from 'src/types';
+import { IPagination, ISelection } from 'src/types';
 import { Prisma, UsersOnCookBooks } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Cookbook } from './entities/cookbook.entity';
@@ -52,16 +52,27 @@ export class CookbookService {
 
   async getMyCookbooks(
     userId: number, 
-    pagination?: IPagination
+    pagination?: IPagination,
+    cookbookSelection?: ISelection,
+    search?: string,
   ) {
 
     const queryParams: Prisma.UsersOnCookBooksFindManyArgs = {
       where: {
         userId,
+        cookbook: search ? {
+          title: {
+            contains: search,
+            mode: 'insensitive',
+          },
+        } : undefined,
       },
       include: {
         cookbook: {
-          select: {
+          select: cookbookSelection ? {
+            ...cookbookSelection,
+            id: true,
+          } : {
             id: true,
             title: true,
             image: true,
@@ -86,7 +97,7 @@ export class CookbookService {
     );
 
     return userCookbooks;
-  } 
+  };
 
   //TODO: Find PUBLIC cookbooks
   findAll() {
