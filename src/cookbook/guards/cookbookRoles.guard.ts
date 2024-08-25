@@ -1,6 +1,5 @@
 import { CanActivate, ExecutionContext, UnauthorizedException } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
-import { Roles } from "src/decorators/roles.decorator";
 import { PrismaService } from "src/prisma/prisma.service";
 
 export class CookbookRolesGuard implements CanActivate {

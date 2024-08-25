@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateCookbookDto } from './dto/create-cookbook.dto';
 import { UpdateCookbookDto } from './dto/update-cookbook.dto';
 import { IPagination, ISelection } from 'src/types';
@@ -12,6 +12,48 @@ export class CookbookService {
 
   constructor(private prismaService: PrismaService) { }
 
+  // Add recipe to cookbook.
+  async addRecipeToCookbook(
+    cookbookId: number,
+    recipeId: number
+  ) {
+
+    // Check whether this recipe is already in the cookbook.
+    const recipe = await this.prismaService.recipe.findUnique({
+      where: {
+        id: recipeId
+      },
+      include: {
+        cookbooks: true
+      }
+    });
+
+    const isRecipeInCookbook = recipe.cookbooks.find((cookbookRelationship) => {
+      return cookbookRelationship.cookbookId === cookbookId;
+    });
+
+    if (isRecipeInCookbook) {
+      throw new BadRequestException('Recipe is already in the cookbook');
+    }
+
+    // If not, then create a new item on CookbookToRecipes.
+    await this.prismaService.cookBookToRecipes.create({
+      data: {
+        cookbook: {
+          connect: {
+            id: cookbookId
+          }
+        },
+        recipe: {
+          connect: {
+            id: recipeId
+          }
+        }
+      }
+    });
+
+
+  }
 
   async create(userId: number, createCookbookDto: CreateCookbookDto) {
 

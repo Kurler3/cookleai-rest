@@ -50,14 +50,10 @@ export class CookbookController {
   @RecipeRoles([RECIPE_ROLES.OWNER, RECIPE_ROLES.EDITOR])
   @Post(':cookbookId/recipes/:recipeId')
   addRecipeToCookbook(
-    @GetUser('id') userId: number,
     @Param('cookbookId') cookbookId: number,
     @Param('recipeId') recipeId: number,
   ) {
-
-    //TODO
-    return 'ok';
-    // return this.cookbookService.addRecipeToCookbook(userId, cookbookId, recipeId);
+    return this.cookbookService.addRecipeToCookbook(cookbookId, recipeId);
   }
 
   // Remove recipe from cookbook
