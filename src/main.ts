@@ -25,10 +25,5 @@ async function bootstrap() {
   // Listen
   await app.listen(3000);
 
-
-  // Seed app
-  //TODO: Remove for PROD
-  
-
 }
 bootstrap();

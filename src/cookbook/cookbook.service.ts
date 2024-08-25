@@ -2,22 +2,21 @@ import { Injectable } from '@nestjs/common';
 import { CreateCookbookDto } from './dto/create-cookbook.dto';
 import { UpdateCookbookDto } from './dto/update-cookbook.dto';
 import { IPagination, ISelection } from 'src/types';
-import { Prisma, UsersOnCookBooks } from '@prisma/client';
+import { CookBook, Prisma, UsersOnCookBooks } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { Cookbook } from './entities/cookbook.entity';
 import { COOKBOOK_ROLES } from 'src/utils/constants';
 
 @Injectable()
 export class CookbookService {
 
 
-  constructor(private prismaService: PrismaService) {}
+  constructor(private prismaService: PrismaService) { }
 
 
   async create(userId: number, createCookbookDto: CreateCookbookDto) {
-    
+
     // Create a cookbook
-    const cookbook = await this.prismaService.cookBook.create({ 
+    const cookbook = await this.prismaService.cookBook.create({
       data: {
         ...createCookbookDto,
         createdByUser: {
@@ -30,7 +29,7 @@ export class CookbookService {
             id: userId,
           },
         },
-      } 
+      }
     });
 
     // Create a permission on the cookbook
@@ -43,29 +42,42 @@ export class CookbookService {
           connect: { id: cookbook.id },
         },
         role: COOKBOOK_ROLES.OWNER,
-        addedAt: new Date(),
         addedBy: userId,
       }
     });
 
+    return { ...cookbook, role: COOKBOOK_ROLES.OWNER };
+
   }
 
   async getMyCookbooks(
-    userId: number, 
+    userId: number,
     pagination?: IPagination,
     cookbookSelection?: ISelection,
     search?: string,
+    excludedRecipeId?: number,
   ) {
 
     const queryParams: Prisma.UsersOnCookBooksFindManyArgs = {
       where: {
         userId,
-        cookbook: search ? {
-          title: {
-            contains: search,
-            mode: 'insensitive',
-          },
-        } : undefined,
+        cookbook: {
+          AND: [
+            search ? {
+              title: {
+                contains: search,
+                mode: 'insensitive',
+              },
+            } : {},
+            excludedRecipeId ? {
+              recipes: {
+                none: {
+                  recipeId: excludedRecipeId,
+                },
+              },
+            } : {},
+          ],
+        },
       },
       include: {
         cookbook: {
@@ -84,16 +96,16 @@ export class CookbookService {
         },
       },
     }
-   
-    if(pagination) {
+
+    if (pagination) {
       queryParams.skip = pagination.page * pagination.limit;
       queryParams.take = pagination.limit;
     }
-  
+
     const userCookbookPermissions = await this.prismaService.usersOnCookBooks.findMany(queryParams);
 
     const userCookbooks = userCookbookPermissions.map(
-      (ur: UsersOnCookBooks & { cookbook: Cookbook }) => ({...ur.cookbook, role: ur.role, addedAt: ur.addedAt}) 
+      (ur: UsersOnCookBooks & { cookbook: CookBook }) => ({ ...ur.cookbook, role: ur.role, addedAt: ur.addedAt })
     );
 
     return userCookbooks;
