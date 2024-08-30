@@ -9,6 +9,7 @@ import { RecipeModule } from './recipe/recipe.module';
 import { CookbookController } from './cookbook/cookbook.controller';
 import { CookbookModule } from './cookbook/cookbook.module';
 import { SupabaseModule } from './supabase/supabase.module';
+import { GeminiModule } from './gemini/gemini.module';
 
 @Module({
   imports: [
@@ -20,7 +21,8 @@ import { SupabaseModule } from './supabase/supabase.module';
     UserModule,
     RecipeModule,
     CookbookModule,
-    SupabaseModule
+    SupabaseModule,
+    GeminiModule
   ],
   controllers: [AppController],
   providers: [AppService],

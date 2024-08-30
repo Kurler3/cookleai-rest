@@ -7,6 +7,9 @@ import { IPagination } from 'src/types';
 import { Prisma, Recipe, UsersOnRecipes } from '@prisma/client';
 import { SupabaseService } from 'src/supabase/supabase.service';
 import { v4 as uuid } from 'uuid';
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import { ConfigService } from '@nestjs/config';
+import { GeminiService } from 'src/gemini/gemini.service';
 
 @Injectable()
 export class RecipeService {
@@ -14,6 +17,7 @@ export class RecipeService {
   constructor(
     private prismaService: PrismaService,
     private supabaseService: SupabaseService,
+    private geminiService: GeminiService,
   ) { }
 
   getRecipeImageKey(recipeImage: string) {
@@ -72,6 +76,12 @@ export class RecipeService {
 
     return newRecipe;
 
+  }
+
+  // Create with ai
+  async createWithAi(userId: number, prompt: string) {
+    const recipeCreateDto = await this.geminiService.generateRecipeFromPrompt(prompt);
+    return await this.create(userId, recipeCreateDto);
   }
 
   async getUserRoleOnRecipe(userId: number, recipeId: number) {

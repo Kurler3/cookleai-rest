@@ -5,14 +5,14 @@ import { UpdateRecipeDto } from './dto/update-recipe.dto';
 import { JwtGuard } from 'src/auth/guard/jwt-auth.guard';
 import { GetUser } from 'src/user/decorator/user.decorator';
 import { GetPagination } from 'src/utils/decorators/pagination.decorator';
-import { IPagination, ISelection } from 'src/types';
+import { IPagination } from 'src/types';
 import { RecipeRolesGuard } from './guards/recipeRoles.guard';
 import { RECIPE_ROLES } from 'src/utils/constants';
 import { GetRole } from 'src/decorators/getRole.decorator';
 import { FileTypesValidator } from 'src/utils/pipes/fileTypes.pipe';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { GetSelection } from 'src/utils/decorators/selector.decorator';
 import { RecipeRoles } from 'src/decorators/RecipeRoles.decorator';
+import { CreateRecipeWithAiDto } from './dto/create-recipe-with-ai.dto';
 
 @UseGuards(JwtGuard)
 @Controller('recipes')
@@ -25,6 +25,15 @@ export class RecipeController {
     @Body() createRecipeDto: CreateRecipeDto
   ) {
     return this.recipeService.create(userId, createRecipeDto);
+  }
+
+  // Create with AI
+  @Post('create-with-ai')
+  createWithAI(
+    @GetUser('id', ParseIntPipe) userId: number,
+    @Body() { prompt }: CreateRecipeWithAiDto,
+  ) {
+    return this.recipeService.createWithAi(userId, prompt);
   }
 
   @Get('my-recipes')
