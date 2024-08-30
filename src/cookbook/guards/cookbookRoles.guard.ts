@@ -1,7 +1,9 @@
-import { CanActivate, ExecutionContext, UnauthorizedException } from "@nestjs/common";
+import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
+import { CookbookRoles } from "src/decorators/CookbookRoles.decorator";
 import { PrismaService } from "src/prisma/prisma.service";
 
+@Injectable()
 export class CookbookRolesGuard implements CanActivate {
 
     constructor(
@@ -11,7 +13,7 @@ export class CookbookRolesGuard implements CanActivate {
     
       async canActivate(context: ExecutionContext): Promise<boolean> {
         
-        const roles = this.reflector.get<string[]>(CookbookRolesGuard, context.getHandler());
+        const roles = this.reflector.get<string[]>(CookbookRoles, context.getHandler());
     
         const request = context.switchToHttp().getRequest();
         const userId = request.user.id;

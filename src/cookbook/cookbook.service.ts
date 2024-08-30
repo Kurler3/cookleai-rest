@@ -52,6 +52,9 @@ export class CookbookService {
       }
     });
 
+    return {
+      message: 'Recipe added to cookbook successfully'
+    }
 
   }
 

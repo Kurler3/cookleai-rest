@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Post, Query, UseGuards } from '@nestjs/common';
 import { CookbookService } from './cookbook.service';
 import { GetUser } from 'src/user/decorator/user.decorator';
 import { GetPagination } from 'src/utils/decorators/pagination.decorator';
@@ -32,8 +32,9 @@ export class CookbookController {
     @GetPagination() pagination?: IPagination,
     @GetSelection() selection?: ISelection,
     @GetSearchTerm() search?: string,
-    @Param('excludedRecipeId') excludedRecipeId?: number,
+    @Query('excludedRecipeId', ParseIntPipe) excludedRecipeId?: number,
   ) {
+
     return this.cookbookService.getMyCookbooks(
       userId, 
       pagination,
@@ -44,14 +45,13 @@ export class CookbookController {
   }
 
   // Add recipe to cookbook
-  @UseGuards(CookbookRolesGuard)
+  @UseGuards(CookbookRolesGuard, RecipeRolesGuard)
   @CookbookRoles([COOKBOOK_ROLES.OWNER, COOKBOOK_ROLES.EDITOR])
-  @UseGuards(RecipeRolesGuard)
   @RecipeRoles([RECIPE_ROLES.OWNER, RECIPE_ROLES.EDITOR])
   @Post(':cookbookId/recipes/:recipeId')
   addRecipeToCookbook(
-    @Param('cookbookId') cookbookId: number,
-    @Param('recipeId') recipeId: number,
+    @Param('cookbookId', ParseIntPipe) cookbookId: number,
+    @Param('recipeId', ParseIntPipe) recipeId: number,
   ) {
     return this.cookbookService.addRecipeToCookbook(cookbookId, recipeId);
   }
