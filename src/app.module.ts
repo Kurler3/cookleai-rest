@@ -10,6 +10,7 @@ import { CookbookController } from './cookbook/cookbook.controller';
 import { CookbookModule } from './cookbook/cookbook.module';
 import { SupabaseModule } from './supabase/supabase.module';
 import { GeminiModule } from './gemini/gemini.module';
+import { QuotaModule } from './quota/quota.module';
 
 @Module({
   imports: [
@@ -22,7 +23,8 @@ import { GeminiModule } from './gemini/gemini.module';
     RecipeModule,
     CookbookModule,
     SupabaseModule,
-    GeminiModule
+    GeminiModule,
+    QuotaModule
   ],
   controllers: [AppController],
   providers: [AppService],

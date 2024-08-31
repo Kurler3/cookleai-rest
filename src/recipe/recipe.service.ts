@@ -148,6 +148,12 @@ export class RecipeService {
           },
         },
       },
+      // Order by time of creation of the recipe, from newest to oldest.
+      orderBy: {
+        recipe: {
+          createdAt: 'desc',
+        }
+      }
     }
 
     if (pagination) {

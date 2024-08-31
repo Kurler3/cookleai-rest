@@ -9,20 +9,19 @@ generator client {
   provider = "prisma-client-js"
 }
 
-
 model User {
-  id Int        @id @default(autoincrement())
-  email String  @unique
+  id        Int    @id @default(autoincrement())
+  email     String @unique
   firstName String
-  lastName String
-  fullName String
-  avatar String
-  
+  lastName  String
+  fullName  String
+  avatar    String
+
   // Cookbooks that the user has access to
   cookbooks UsersOnCookBooks[]
 
   // Liked recipes
-  likes      Recipe[]     @relation("RecipeLikes") // Gets the list of liked recipes for the user
+  likes Recipe[] @relation("RecipeLikes") // Gets the list of liked recipes for the user
 
   // Updated cookbooks
   updatedCookbooks CookBook[] @relation("UserUpdateCookbook")
@@ -39,11 +38,13 @@ model User {
   // Created Recipes
   createdRecipes Recipe[] @relation("UserCreateRecipe")
 
-  followers  Follow[]     @relation("followers")
-  following  Follow[]     @relation("following")
+  followers Follow[] @relation("followers")
+  following Follow[] @relation("following")
 
-  blocked    BlockedUser[]  @relation("Blocked")
-  blockedBy  BlockedUser[]@relation("BlockedBy")
+  blocked   BlockedUser[] @relation("Blocked")
+  blockedBy BlockedUser[] @relation("BlockedBy")
+
+  quotas UserQuota[]
 
   // CREATED AT AND UPDATED AT
   createdAt DateTime @default(now())
@@ -53,11 +54,27 @@ model User {
   @@map("users")
 }
 
+// Quota
+model UserQuota {
+  userId             Int 
+  used               Int 
+  limit              Int
+  type               String // Type of quota: ai, etc...
+  isResettable       Boolean   // Indicates if the quota is resettable
+  resetFrequency     String  // Enum to indicate how often the quota resets
+  lastResetTimestamp DateTime // Timestamp of the last quota reset, will be used to reset each day.
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@id([userId, type])
+}
+
+
 model CookBook {
-  id Int        @id @default(autoincrement())
-  title String
+  id       Int     @id @default(autoincrement())
+  title    String
   isPublic Boolean @default(false)
-  image String?
+  image    String?
 
   // Users
   users UsersOnCookBooks[]
@@ -70,9 +87,9 @@ model CookBook {
   updatedAt DateTime @updatedAt()
 
   // Updated by and created by
-  updatedBy Int 
+  updatedBy     Int
   updatedByUser User @relation("UserUpdateCookbook", fields: [updatedBy], references: [id])
-  createdBy Int
+  createdBy     Int
   createdByUser User @relation("UserCreateCookbook", fields: [createdBy], references: [id])
 
   // Map
@@ -80,26 +97,25 @@ model CookBook {
 }
 
 model Recipe {
-
-  id Int        @id @default(autoincrement())
-  title String
+  id          Int     @id @default(autoincrement())
+  title       String
   description String?
-  isPublic Boolean @default(false)
-  image String?
-  servings String?
-  notes String?
-  prepTime Int?
-  cookTime Int?
-  nutrients Json? // calories: Float, carbohydrates: Float, Protein: Float, Fat: Float
-  cuisine String?
-  language String?
-  difficulty String?
-  rating Int?
+  isPublic    Boolean @default(false)
+  image       String?
+  servings    String?
+  notes       String?
+  prepTime    Int?
+  cookTime    Int?
+  nutrients   Json? // calories: Float, carbohydrates: Float, Protein: Float, Fat: Float
+  cuisine     String?
+  language    String?
+  difficulty  String?
+  rating      Int?
 
-  ingredients Json[] @default([]) // name: String; quantity: Float, unit: String
-  instructions String[]  @default([])
-  likedBy      User[]       @relation("RecipeLikes") // List of users who liked this thang
-  cookbooks CookBookToRecipes[]
+  ingredients  Json[]              @default([]) // name: String; quantity: Float, unit: String
+  instructions String[]            @default([])
+  likedBy      User[]              @relation("RecipeLikes") // List of users who liked this thang
+  cookbooks    CookBookToRecipes[]
 
   users UsersOnRecipes[]
 
@@ -108,42 +124,40 @@ model Recipe {
   updatedAt DateTime @updatedAt()
 
   // Updated by and created by
-  updatedBy Int
+  updatedBy     Int
   updatedByUser User @relation("UserUpdateRecipe", fields: [updatedBy], references: [id])
-  createdBy Int
+  createdBy     Int
   createdByUser User @relation("UserCreateRecipe", fields: [createdBy], references: [id])
 
   @@map("recipes")
 }
 
-
 ///////////////////////////////////////////////////////
 // ONE TO MANY RELATIONSHIP MODELS ////////////////////
 ///////////////////////////////////////////////////////
 model UsersOnRecipes {
-
   recipeId Int
-  recipe Recipe       @relation(fields: [recipeId], references: [id], onDelete: Cascade)
-  userId    Int
-  user      User      @relation(fields:[userId], references: [id], onDelete: Cascade)
+  recipe   Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  userId   Int
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  role      String    
+  role String
 
   // Extra fields on the relationship
-  addedAt   DateTime     @default(now())
-  addedBy   Int
+  addedAt DateTime @default(now())
+  addedBy Int
 
-  @@map("users_on_recipes")
   @@id([recipeId, userId])
   @@index([userId])
+  @@map("users_on_recipes")
 }
 
 model Follow {
-  followerId Int
+  followerId  Int
   followingId Int
-  follower   User @relation("followers", fields: [followerId], references: [id])
-  following  User @relation("following", fields: [followingId], references: [id])
-  
+  follower    User @relation("followers", fields: [followerId], references: [id])
+  following   User @relation("following", fields: [followingId], references: [id])
+
   @@id([followerId, followingId])
   @@map("follow")
 }
@@ -153,7 +167,7 @@ model BlockedUser {
   blockedId Int
   blocker   User @relation("BlockedBy", fields: [blockerId], references: [id])
   blocked   User @relation("Blocked", fields: [blockedId], references: [id])
-  
+
   @@id([blockerId, blockedId])
   @@index([blockedId])
   @@map("blocked_user")
@@ -165,38 +179,35 @@ model BlockedUser {
 
 model CookBookToRecipes {
   cookbookId Int
-  cookbook CookBook     @relation(fields: [cookbookId], references: [id])
-  recipeId Int
-  recipe Recipe         @relation(fields: [recipeId], references: [id])
-  
+  cookbook   CookBook @relation(fields: [cookbookId], references: [id])
+  recipeId   Int
+  recipe     Recipe   @relation(fields: [recipeId], references: [id])
+
   // Extra fields on the relationship
   addedAt DateTime @default(now())
 
-  @@id([cookbookId, recipeId]) 
+  @@id([cookbookId, recipeId])
   @@index([cookbookId])
   @@map("cookbook_to_recipes")
 }
-
 
 // Model for many-to-many relationship of users with cookbooks
 // Because a cookbook can have many users (you can share it with others) 
 // and a user can have many cookbooks too!
 
 model UsersOnCookBooks {
-  cookbook    CookBook     @relation(fields: [cookbookId],references: [id])
-  cookbookId  Int
-  user        User         @relation(fields: [userId], references: [id])
-  userId      Int
+  cookbook   CookBook @relation(fields: [cookbookId], references: [id])
+  cookbookId Int
+  user       User     @relation(fields: [userId], references: [id])
+  userId     Int
 
-
-  role      String // editor or viewer
+  role String // editor or viewer
 
   // Extra fields on the relationship
-  addedAt   DateTime     @default(now())
-  addedBy   Int
+  addedAt DateTime @default(now())
+  addedBy Int
 
-  @@map("users_on_cookbooks")
   @@id([cookbookId, userId])
   @@index([userId])
+  @@map("users_on_cookbooks")
 }
-
