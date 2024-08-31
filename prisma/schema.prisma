@@ -64,7 +64,7 @@ model UserQuota {
   resetFrequency     String  // Enum to indicate how often the quota resets
   lastResetTimestamp DateTime // Timestamp of the last quota reset, will be used to reset each day.
 
-  user User @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([userId, type])
 }
@@ -155,8 +155,8 @@ model UsersOnRecipes {
 model Follow {
   followerId  Int
   followingId Int
-  follower    User @relation("followers", fields: [followerId], references: [id])
-  following   User @relation("following", fields: [followingId], references: [id])
+  follower    User @relation("followers", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User @relation("following", fields: [followingId], references: [id], onDelete: Cascade)
 
   @@id([followerId, followingId])
   @@map("follow")
@@ -165,8 +165,8 @@ model Follow {
 model BlockedUser {
   blockerId Int
   blockedId Int
-  blocker   User @relation("BlockedBy", fields: [blockerId], references: [id])
-  blocked   User @relation("Blocked", fields: [blockedId], references: [id])
+  blocker   User @relation("BlockedBy", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked   User @relation("Blocked", fields: [blockedId], references: [id], onDelete: Cascade)
 
   @@id([blockerId, blockedId])
   @@index([blockedId])
@@ -179,9 +179,9 @@ model BlockedUser {
 
 model CookBookToRecipes {
   cookbookId Int
-  cookbook   CookBook @relation(fields: [cookbookId], references: [id])
+  cookbook   CookBook @relation(fields: [cookbookId], references: [id], onDelete: Cascade)
   recipeId   Int
-  recipe     Recipe   @relation(fields: [recipeId], references: [id])
+  recipe     Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
 
   // Extra fields on the relationship
   addedAt DateTime @default(now())
@@ -196,9 +196,9 @@ model CookBookToRecipes {
 // and a user can have many cookbooks too!
 
 model UsersOnCookBooks {
-  cookbook   CookBook @relation(fields: [cookbookId], references: [id])
+  cookbook   CookBook @relation(fields: [cookbookId], references: [id], onDelete: Cascade)
   cookbookId Int
-  user       User     @relation(fields: [userId], references: [id])
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId     Int
 
   role String // editor or viewer
