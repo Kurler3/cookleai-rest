@@ -16,12 +16,12 @@ export class UserController {
         return user;
     }
 
-    // Get quota (s)
-    @Get('/quotas')
+    // Get quota by type.
+    @Get('/quota-by-type')
     async getQuotas(
         @GetUser('id') userId: number,
         @Param('quotaType') quotaType: string, 
     ) {
-        return this.userService.getQuotas(userId, quotaType);
+        return this.userService.getQuotaByType(userId, quotaType);
     }
 }
