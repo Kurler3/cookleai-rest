@@ -7,9 +7,8 @@ import { IPagination } from 'src/types';
 import { Prisma, Recipe, UsersOnRecipes } from '@prisma/client';
 import { SupabaseService } from 'src/supabase/supabase.service';
 import { v4 as uuid } from 'uuid';
-import { GoogleGenerativeAI } from "@google/generative-ai";
-import { ConfigService } from '@nestjs/config';
 import { GeminiService } from 'src/gemini/gemini.service';
+import { QuotaService } from '../quota/quota.service';
 
 @Injectable()
 export class RecipeService {
@@ -18,6 +17,7 @@ export class RecipeService {
     private prismaService: PrismaService,
     private supabaseService: SupabaseService,
     private geminiService: GeminiService,
+    private quotaService: QuotaService
   ) { }
 
   getRecipeImageKey(recipeImage: string) {
@@ -81,6 +81,10 @@ export class RecipeService {
   // Create with ai
   async createWithAi(userId: number, prompt: string) {
     const recipeCreateDto = await this.geminiService.generateRecipeFromPrompt(prompt);
+
+    // Increment quota.
+    await this.quotaService.incrementQuota(userId, 'AI', 1);
+
     return await this.create(userId, recipeCreateDto);
   }
 
