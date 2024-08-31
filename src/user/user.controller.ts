@@ -1,4 +1,4 @@
-import { Controller, Get, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, UseGuards, Query } from '@nestjs/common';
 import { JwtGuard } from 'src/auth/guard/jwt-auth.guard';
 import { GetUser } from './decorator/user.decorator';
 import { User } from '@prisma/client';
@@ -20,7 +20,7 @@ export class UserController {
     @Get('/quota-by-type')
     async getQuotas(
         @GetUser('id') userId: number,
-        @Param('quotaType') quotaType: string, 
+        @Query('quotaType') quotaType: string, 
     ) {
         return this.userService.getQuotaByType(userId, quotaType);
     }

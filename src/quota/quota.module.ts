@@ -3,6 +3,7 @@ import { QuotaService } from './quota.service';
 
 
 @Module({
-  imports: [QuotaService]
+  providers: [QuotaService],
+  exports: [QuotaService]
 })
 export class QuotaModule {}
