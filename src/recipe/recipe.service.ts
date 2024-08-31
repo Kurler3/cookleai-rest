@@ -80,6 +80,14 @@ export class RecipeService {
 
   // Create with ai
   async createWithAi(userId: number, prompt: string) {
+
+    // Check quota.
+    const quota = await this.quotaService.getQuotaByType(userId, "AI");
+
+    if(quota.used >= quota.limit) {
+      throw new UnauthorizedException('You have exceeded your AI quota. Please try again tomorrow.');
+    }
+
     const recipeCreateDto = await this.geminiService.generateRecipeFromPrompt(prompt);
 
     // Increment quota.
