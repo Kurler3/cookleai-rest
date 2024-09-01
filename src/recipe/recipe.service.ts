@@ -4,7 +4,7 @@ import { UpdateRecipeDto } from './dto/update-recipe.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { RECIPE_ROLES } from 'src/utils/constants';
 import { IPagination } from 'src/types';
-import { Prisma, Recipe, UsersOnRecipes } from '@prisma/client';
+import { Prisma, Recipe, User, UsersOnRecipes } from '@prisma/client';
 import { SupabaseService } from 'src/supabase/supabase.service';
 import { v4 as uuid } from 'uuid';
 import { GeminiService } from 'src/gemini/gemini.service';
@@ -36,7 +36,7 @@ export class RecipeService {
     });
   }
 
-  async create(userId: number, createRecipeDto: CreateRecipeDto) {
+  async create(user: User, createRecipeDto: CreateRecipeDto) {
 
     // Create a new recipe
     const newRecipe = await this.prismaService.recipe.create({
@@ -45,12 +45,12 @@ export class RecipeService {
         isPublic: false, //?? Not public by default
         createdByUser: {
           connect: {
-            id: userId,
+            id: user.id,
           },
         },
         updatedByUser: {
           connect: {
-            id: userId,
+            id: user.id,
           },
         }
       }
@@ -61,7 +61,7 @@ export class RecipeService {
       data: {
         user: {
           connect: {
-            id: userId,
+            id: user.id,
           }
         },
         recipe: {
@@ -70,19 +70,22 @@ export class RecipeService {
           }
         },
         role: RECIPE_ROLES.OWNER,
-        addedBy: userId,
+        addedBy: user.id,
       }
     })
 
-    return newRecipe;
+    return {
+      ...newRecipe,
+      createdByUser: user,
+    };
 
   }
 
   // Create with ai
-  async createWithAi(userId: number, prompt: string) {
+  async createWithAi(user: User, prompt: string) {
 
     // Check quota.
-    const quota = await this.quotaService.getQuotaByType(userId, "AI");
+    const quota = await this.quotaService.getQuotaByType(user.id, "AI");
 
     if(quota.used >= quota.limit) {
       throw new UnauthorizedException('You have exceeded your AI quota. Please try again tomorrow.');
@@ -91,9 +94,9 @@ export class RecipeService {
     const recipeCreateDto = await this.geminiService.generateRecipeFromPrompt(prompt);
 
     // Increment quota.
-    await this.quotaService.incrementQuota(userId, 'AI', 1);
+    await this.quotaService.incrementQuota(user.id, 'AI', 1);
 
-    return await this.create(userId, recipeCreateDto);
+    return await this.create(user, recipeCreateDto);
   }
 
   async getUserRoleOnRecipe(userId: number, recipeId: number) {

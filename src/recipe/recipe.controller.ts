@@ -13,6 +13,7 @@ import { FileTypesValidator } from 'src/utils/pipes/fileTypes.pipe';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { RecipeRoles } from 'src/decorators/RecipeRoles.decorator';
 import { CreateRecipeWithAiDto } from './dto/create-recipe-with-ai.dto';
+import { User } from '@prisma/client';
 
 @UseGuards(JwtGuard)
 @Controller('recipes')
@@ -21,19 +22,19 @@ export class RecipeController {
 
   @Post('create')
   create(
-    @GetUser('id', ParseIntPipe) userId: number,
+    @GetUser() user: User,
     @Body() createRecipeDto: CreateRecipeDto
   ) {
-    return this.recipeService.create(userId, createRecipeDto);
+    return this.recipeService.create(user, createRecipeDto);
   }
 
   // Create with AI
   @Post('create-with-ai')
   createWithAI(
-    @GetUser('id', ParseIntPipe) userId: number,
+    @GetUser() user: User,
     @Body() { prompt }: CreateRecipeWithAiDto,
   ) {
-    return this.recipeService.createWithAi(userId, prompt);
+    return this.recipeService.createWithAi(user, prompt);
   }
 
   @Get('my-recipes')
