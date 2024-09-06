@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   InternalServerErrorException,
+  Post,
   Req,
   Res,
   UnauthorizedException,
@@ -59,4 +60,19 @@ export class AuthController {
   async refresh(@GetRefreshToken() refreshToken: string | null) {
     return this.authService.refreshAccessToken(refreshToken);
   }
+
+  // Logout
+  @Post('logout')
+  logout(@Res() res: Response) {
+
+    // Clear the refresh token cookie
+    res.clearCookie('refreshToken', {
+      httpOnly: true,
+      secure: false, // Set to true if using HTTPS
+      path: '/', // Make the cookie available to the entire site
+    });
+
+    return res.status(200).json({ message: 'Logged out successfully' });
+  }
+
 }
