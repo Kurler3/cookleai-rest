@@ -68,8 +68,8 @@ export class AuthController {
     // Clear the refresh token cookie
     res.clearCookie('refreshToken', {
       httpOnly: true,
-      secure: false, // Set to true if using HTTPS
-      path: '/', // Make the cookie available to the entire site
+      secure: false,
+      path: '/',
     });
 
     return res.status(200).json({ message: 'Logged out successfully' });
