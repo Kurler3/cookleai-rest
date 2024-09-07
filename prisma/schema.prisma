@@ -21,6 +21,7 @@ model User {
   cookbooks UsersOnCookBooks[]
 
   // Liked recipes
+  //TODO: Fix
   likes Recipe[] @relation("RecipeLikes") // Gets the list of liked recipes for the user
 
   // Updated cookbooks

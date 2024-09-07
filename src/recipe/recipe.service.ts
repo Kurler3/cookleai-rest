@@ -9,6 +9,7 @@ import { SupabaseService } from 'src/supabase/supabase.service';
 import { v4 as uuid } from 'uuid';
 import { GeminiService } from 'src/gemini/gemini.service';
 import { QuotaService } from '../quota/quota.service';
+import { IFindMyRecipesInput } from '../../dist/types/recipe.type';
 
 @Injectable()
 export class RecipeService {
@@ -144,12 +145,25 @@ export class RecipeService {
 
 
   // Get user recipes
-  async findMyRecipes(userId: number, pagination?: IPagination) {
+  async findMyRecipes({
+    userId, 
+    pagination,
+    title,
+    cuisine,
+    difficulty
+  }: IFindMyRecipesInput) {
+
+    const whereFilter: Prisma.UsersOnRecipesWhereInput = {
+      userId,
+      recipe: {
+        ...(title && { title: { contains: title } }),
+        ...(cuisine && { cuisine: { equals: cuisine } }),
+        ...(difficulty && { difficulty: { equals: difficulty } }),
+      },
+    };
 
     const queryParams: Prisma.UsersOnRecipesFindManyArgs = {
-      where: {
-        userId,
-      },
+      where: whereFilter,
       include: {
         recipe: {
           select: {

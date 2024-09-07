@@ -1,4 +1,19 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, ParseIntPipe, UploadedFile, ParseFilePipe, MaxFileSizeValidator, UseInterceptors } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+  ParseIntPipe,
+  UploadedFile,
+  ParseFilePipe,
+  MaxFileSizeValidator,
+  UseInterceptors,
+  Query,
+} from '@nestjs/common';
 import { RecipeService } from './recipe.service';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { UpdateRecipeDto } from './dto/update-recipe.dto';
@@ -21,10 +36,7 @@ export class RecipeController {
   constructor(private readonly recipeService: RecipeService) {}
 
   @Post('create')
-  create(
-    @GetUser() user: User,
-    @Body() createRecipeDto: CreateRecipeDto
-  ) {
+  create(@GetUser() user: User, @Body() createRecipeDto: CreateRecipeDto) {
     return this.recipeService.create(user, createRecipeDto);
   }
 
@@ -41,20 +53,23 @@ export class RecipeController {
   findMyRecipes(
     @GetUser('id', ParseIntPipe) userId: number,
     @GetPagination() pagination?: IPagination,
+    @Query('title') title?: string,
+    @Query('cuisine') cuisine?: string,
+    @Query('difficulty') difficulty?: string,
   ) {
-    return this.recipeService.findMyRecipes(
+    return this.recipeService.findMyRecipes({
       userId, 
-      pagination, 
-    );
+      pagination,
+      title,
+      cuisine,
+      difficulty,
+    });
   }
-  
+
   // Get detailed recipe data.
   @UseGuards(RecipeRolesGuard)
   @Get(':recipeId')
-  findOne(
-    @Param('recipeId') recipeId: string,
-    @GetRole() role: string,
-  ) {
+  findOne(@Param('recipeId') recipeId: string, @GetRole() role: string) {
     return this.recipeService.findOne(+recipeId, role);
   }
 
@@ -62,9 +77,7 @@ export class RecipeController {
   @UseGuards(RecipeRolesGuard)
   @RecipeRoles([RECIPE_ROLES.OWNER])
   @Delete(':recipeId')
-  remove(
-    @Param('recipeId') recipeId: string,
-  ) {
+  remove(@Param('recipeId') recipeId: string) {
     return this.recipeService.remove(+recipeId);
   }
 
@@ -73,7 +86,7 @@ export class RecipeController {
   @RecipeRoles([RECIPE_ROLES.OWNER, RECIPE_ROLES.EDITOR])
   @Patch(':recipeId')
   update(
-    @Param('recipeId') recipeId: string, 
+    @Param('recipeId') recipeId: string,
     @Body() updateRecipeDto: UpdateRecipeDto,
     @GetRole() role: string,
   ) {
@@ -91,18 +104,15 @@ export class RecipeController {
       new FileTypesValidator(),
       new ParseFilePipe({
         validators: [
-          new MaxFileSizeValidator({ 
-            maxSize: 1024 * 1024 * 200 // 200MB, 1MB = 1024 KB, 1KB = 1024 B
+          new MaxFileSizeValidator({
+            maxSize: 1024 * 1024 * 200, // 200MB, 1MB = 1024 KB, 1KB = 1024 B
           }),
-        ]
-      })
-    ) img: Express.Multer.File,
-  ) {
-
-    return this.recipeService.editRecipeImage(
-      recipeId,
-      img,
+        ],
+      }),
     )
+    img: Express.Multer.File,
+  ) {
+    return this.recipeService.editRecipeImage(recipeId, img);
   }
 
   //TODO: Find public recipes (for explore page)

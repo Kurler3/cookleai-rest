@@ -1,3 +1,4 @@
+import { IPagination } from "./pagination.types";
 
 
 export type INutrients = {
@@ -12,3 +13,13 @@ export type IIngredient = {
     amount: number;
     unit: string;
 }
+
+
+export type IFindMyRecipesInput = {
+    userId: number;
+    pagination?: IPagination;
+    title?: string;
+    cuisine?: string;
+    difficulty?: string;
+}
+
