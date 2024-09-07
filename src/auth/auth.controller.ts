@@ -15,6 +15,7 @@ import { Response } from 'express';
 import { ConfigService } from '@nestjs/config';
 import { User } from '@prisma/client';
 import { GetRefreshToken } from './decorator/refreshToken.decorator';
+import { JwtGuard } from './guard/jwt-auth.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -42,10 +43,11 @@ export class AuthController {
 
       // Set the refresh token as an HTTP-only cookie
       res.cookie('refreshToken', tokens.refreshToken, {
-        httpOnly: true,
-        secure: false, //TODO Set to true if using HTTPS
-        // sameSite: 'none', // Adjust according to your needs
-        path: '/', // Make the cookie available to the entire site
+        httpOnly: true, // Cannot be accessed by client-side JavaScript
+        secure: false, // Set to false for local development (no HTTPS)
+        // sameSite: 'none', // Required for cross-origin requests
+        path: '/', // Cookie is available for the whole site
+        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 Days
       });
 
       res.redirect(`${frontendUrl}/oauth-redirect?token=${tokens.accessToken}`);
@@ -62,17 +64,17 @@ export class AuthController {
   }
 
   // Logout
+  @UseGuards(JwtGuard)
   @Post('logout')
   logout(@Res() res: Response) {
 
-    // Clear the refresh token cookie
     res.clearCookie('refreshToken', {
       httpOnly: true,
-      secure: false,
-      path: '/',
+      secure: false,     // Or true if the cookie was set in production with HTTPS
+      // sameSite: 'none',
+      path: '/',         
     });
 
     return res.status(200).json({ message: 'Logged out successfully' });
   }
-
 }
