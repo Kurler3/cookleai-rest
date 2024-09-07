@@ -9,7 +9,7 @@ import { SupabaseService } from 'src/supabase/supabase.service';
 import { v4 as uuid } from 'uuid';
 import { GeminiService } from 'src/gemini/gemini.service';
 import { QuotaService } from '../quota/quota.service';
-import { IFindMyRecipesInput } from '../../dist/types/recipe.type';
+import { IFindMyRecipesInput } from "../types/recipe.type";
 
 @Injectable()
 export class RecipeService {
