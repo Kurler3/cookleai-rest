@@ -123,6 +123,9 @@ export class RecipeService {
       where: {
         id: recipeId,
       },
+      include: {
+        createdByUser: true,
+      }
     });
 
     // Return the recipe, along with the role of this user in the recipe
