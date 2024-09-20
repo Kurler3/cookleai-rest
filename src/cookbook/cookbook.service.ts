@@ -126,17 +126,56 @@ export class CookbookService {
       },
       include: {
         cookbook: {
-          select: cookbookSelection ? {
-            ...cookbookSelection,
-            id: true,
-          } : {
-            id: true,
-            title: true,
-            image: true,
-            isPublic: true,
-            createdAt: true,
-            updatedAt: true,
-            createdByUser: true,
+          
+          select: {
+
+            // -----------------
+            // Select the info for the cookbook
+            ...(cookbookSelection ? {
+              ...cookbookSelection,
+              id: true,
+            } : {
+              id: true,
+              title: true,
+              image: true,
+              isPublic: true,
+              createdAt: true,
+              updatedAt: true,
+              createdByUser: true,
+            }),
+
+            // ----------------
+
+            // ----------------
+            // Get count of recipes on cookbook
+            _count: {
+              select: {
+                recipes: true, // This will give you the count of recipes in the cookbook.
+              },
+            },
+
+            // -------------
+
+            // ----------------
+            // Get the first recipe image.
+            recipes: {
+              take: 1, // Get only the first recipe
+              orderBy: {
+                recipe: {
+                  createdAt: 'asc', 
+                } 
+              },
+              include: {
+                recipe: {
+                  select: {
+                    image: true,
+                  }
+                }
+              }
+            },
+
+            // ------------
+
           },
         },
       },
@@ -150,7 +189,11 @@ export class CookbookService {
     const userCookbookPermissions = await this.prismaService.usersOnCookBooks.findMany(queryParams);
 
     const userCookbooks = userCookbookPermissions.map(
-      (ur: UsersOnCookBooks & { cookbook: CookBook }) => ({ ...ur.cookbook, role: ur.role, addedAt: ur.addedAt })
+      (ur: UsersOnCookBooks & { cookbook: CookBook }) => ({
+        ...ur.cookbook,
+        role: ur.role,
+        addedAt: ur.addedAt,
+      })
     );
 
     return userCookbooks;

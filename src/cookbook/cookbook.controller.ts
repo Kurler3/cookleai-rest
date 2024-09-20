@@ -32,9 +32,8 @@ export class CookbookController {
     @GetPagination() pagination?: IPagination,
     @GetSelection() selection?: ISelection,
     @GetSearchTerm() search?: string,
-    @Query('excludedRecipeId', ParseIntPipe) excludedRecipeId?: number,
+    @Query('excludedRecipeId', new ParseIntPipe({ optional: true })) excludedRecipeId?: number,
   ) {
-
     return this.cookbookService.getMyCookbooks(
       userId, 
       pagination,
