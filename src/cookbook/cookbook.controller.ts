@@ -18,7 +18,7 @@ import { CookbookRoles } from 'src/decorators/CookbookRoles.decorator';
 export class CookbookController {
   constructor(private readonly cookbookService: CookbookService) {}
 
-  @Post()
+  @Post('create')
   create(
     @GetUser('id') userId: number,
     @Body() createCookbookDto: CreateCookbookDto,
