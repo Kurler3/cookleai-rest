@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { truncate } from 'fs';
 
 @Injectable()
 export class SupabaseService {
@@ -63,5 +64,26 @@ export class SupabaseService {
 
       throw new BadRequestException(`Error uploading file: ${error.message}`);
     }
+  }
+
+  // Add user to auth
+  async createUser(
+    email: string,
+    name: {
+      givenName: string;
+      familyName: string;
+    },
+    photo: string,
+  ) {
+
+    return await this.supabase.auth.admin.createUser({
+      email,
+      email_confirm: true,
+      user_metadata: {
+        full_name: `${name.givenName} ${name.familyName}`,
+        avatar_url: photo,
+      }
+    })
+
   }
 }

@@ -37,6 +37,7 @@ export class AuthController {
     @GetUser() user: User, // Data that comes from the google strategy validate func
   ) {
     try {
+      
       const frontendUrl = this.configService.get('FRONTEND_URL');
 
       const tokens = await this.authService.oauthLogin(user);
