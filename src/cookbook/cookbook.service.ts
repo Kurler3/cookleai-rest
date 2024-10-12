@@ -1,6 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateCookbookDto } from './dto/create-cookbook.dto';
-import { UpdateCookbookDto } from './dto/update-cookbook.dto';
 import { IPagination, ISelection } from 'src/types';
 import { CookBook, Prisma, UsersOnCookBooks } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -199,24 +198,31 @@ export class CookbookService {
     return userCookbooks;
   };
 
-  //TODO: Find PUBLIC cookbooks
-  findAll() {
-    return `This action returns all cookbook`;
-  }
+  // Get single cookbook
+  async findOne(cookbookId: number, role: string) {
 
-  //TODO: Get detailed cookbook? 
-  findOne(id: number) {
-    return `This action returns a #${id} cookbook`;
-  }
+    // Get all users that have access to the cookbook.
+    const cookbook = await this.prismaService.cookBook.findUnique({
+      where: {
+        id: cookbookId,
+      },
+      include: {
+        users: {
+          select: {
+            user: true,
+            role: true,
+          }
+          // include: {
+          //   user: true,
+          // }
+        }
+      }
+    });
 
-  //TODO: Update cookbook
-  update(id: number, updateCookbookDto: UpdateCookbookDto) {
-    return `This action updates a #${id} cookbook`;
+    // Attach role of the calling user.
+    return {
+      ...cookbook,
+      role,
+    }
   }
-
-  //TODO: Delete cookbook
-  remove(id: number) {
-    return `This action removes a #${id} cookbook`;
-  }
-
 }

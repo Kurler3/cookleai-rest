@@ -12,6 +12,7 @@ import { COOKBOOK_ROLES, RECIPE_ROLES } from 'src/utils/constants';
 import { RecipeRolesGuard } from 'src/recipe/guards/recipeRoles.guard';
 import { RecipeRoles } from 'src/decorators/RecipeRoles.decorator';
 import { CookbookRoles } from 'src/decorators/CookbookRoles.decorator';
+import { GetRole } from '../decorators/getRole.decorator';
 
 @UseGuards(JwtGuard)
 @Controller('cookbooks')
@@ -55,15 +56,22 @@ export class CookbookController {
     return this.cookbookService.addRecipeToCookbook(cookbookId, recipeId);
   }
 
-  // Remove recipe from cookbook
+  // Get a cookbook
+  @UseGuards(CookbookRolesGuard)
+  @CookbookRoles([COOKBOOK_ROLES.OWNER, COOKBOOK_ROLES.EDITOR, COOKBOOK_ROLES.VIEWER])
+  @Get(':cookbookId')
+  findOne(
+    @Param('cookbookId') cookbookId: string,
+    @GetRole() role: string,
+  ) {
+    return this.cookbookService.findOne(
+      +cookbookId,
+      role,
+    );
+  }
 
-
-  // //TODO
-  // @Get(':id')
-  // findOne(@Param('id') id: string) {
-  //   return this.cookbookService.findOne(+id);
-  // }
-
+  //TODO Remove recipe from cookbook
+  
   // //TODO
   // @Patch(':id')
   // update(@Param('id') id: string, @Body() updateCookbookDto: UpdateCookbookDto) {
@@ -76,5 +84,4 @@ export class CookbookController {
   //   return this.cookbookService.remove(+id);
   // }
 
-  //TODO Find public
 }
