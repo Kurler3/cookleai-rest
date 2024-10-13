@@ -4,6 +4,7 @@ import { IPagination, ISelection } from 'src/types';
 import { CookBook, Prisma, UsersOnCookBooks } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { COOKBOOK_ROLES } from 'src/utils/constants';
+import { UpdateCookbookDto } from './dto/update-cookbook.dto';
 
 @Injectable()
 export class CookbookService {
@@ -125,7 +126,7 @@ export class CookbookService {
       },
       include: {
         cookbook: {
-          
+
           select: {
 
             // -----------------
@@ -161,8 +162,8 @@ export class CookbookService {
               take: 1, // Get only the first recipe
               orderBy: {
                 recipe: {
-                  createdAt: 'asc', 
-                } 
+                  createdAt: 'asc',
+                }
               },
               include: {
                 recipe: {
@@ -212,9 +213,6 @@ export class CookbookService {
             user: true,
             role: true,
           }
-          // include: {
-          //   user: true,
-          // }
         }
       }
     });
@@ -224,5 +222,20 @@ export class CookbookService {
       ...cookbook,
       role,
     }
+  }
+
+  // Update
+  async update(
+    cookbookId: number,
+    updateCookbookDto: UpdateCookbookDto,
+  ) {
+
+    return await this.prismaService.cookBook.update({
+      where: {
+        id: cookbookId,
+      },
+      data: updateCookbookDto,
+    });
+
   }
 }

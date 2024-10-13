@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { CookbookService } from './cookbook.service';
 import { GetUser } from 'src/user/decorator/user.decorator';
 import { GetPagination } from 'src/utils/decorators/pagination.decorator';
@@ -13,6 +13,7 @@ import { RecipeRolesGuard } from 'src/recipe/guards/recipeRoles.guard';
 import { RecipeRoles } from 'src/decorators/RecipeRoles.decorator';
 import { CookbookRoles } from 'src/decorators/CookbookRoles.decorator';
 import { GetRole } from '../decorators/getRole.decorator';
+import { UpdateCookbookDto } from './dto/update-cookbook.dto';
 
 @UseGuards(JwtGuard)
 @Controller('cookbooks')
@@ -70,18 +71,24 @@ export class CookbookController {
     );
   }
 
+  // Update a cookbook
+  @UseGuards(CookbookRolesGuard)
+  @CookbookRoles([COOKBOOK_ROLES.OWNER, COOKBOOK_ROLES.EDITOR])
+  @Patch(':cookbookId')
+  update(
+    @Param("cookbookId") cookbookId: string,
+    @Body() updateCookbookDto: UpdateCookbookDto,
+  ) {
+    return this.cookbookService.update(
+      +cookbookId,
+      updateCookbookDto,
+    );
+  }
+
+  //TODO Delete cookbook
+
+  //TODO Leave cookbook
+
   //TODO Remove recipe from cookbook
   
-  // //TODO
-  // @Patch(':id')
-  // update(@Param('id') id: string, @Body() updateCookbookDto: UpdateCookbookDto) {
-  //   return this.cookbookService.update(+id, updateCookbookDto);
-  // }
-
-  // //TODO
-  // @Delete(':id')
-  // remove(@Param('id') id: string) {
-  //   return this.cookbookService.remove(+id);
-  // }
-
 }
