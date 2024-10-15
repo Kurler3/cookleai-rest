@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { CookbookService } from './cookbook.service';
 import { GetUser } from 'src/user/decorator/user.decorator';
 import { GetPagination } from 'src/utils/decorators/pagination.decorator';
@@ -85,8 +85,17 @@ export class CookbookController {
     );
   }
 
-  //TODO Delete cookbook
+  // Delete cookbook
+  @UseGuards(CookbookRolesGuard)
+  @CookbookRoles([COOKBOOK_ROLES.OWNER])
+  @Delete(':cookbookId')
+  delete(
+    @Param('cookbookId') cookbookId: string,
+  ) {
+    return this.cookbookService.delete(+cookbookId)
+  }
 
+  
   //TODO Leave cookbook
 
   //TODO Remove recipe from cookbook

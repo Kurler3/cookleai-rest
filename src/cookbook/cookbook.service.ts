@@ -238,4 +238,21 @@ export class CookbookService {
     });
 
   }
+
+  // Delete
+  async delete(
+    cookbookId: number,
+  ) {
+
+    await this.prismaService.cookBook.delete({
+      where: {
+        id: cookbookId,
+      },
+    });
+
+    return {
+      message: 'Cookbook deleted successfully!'
+    }
+
+  }
 }
