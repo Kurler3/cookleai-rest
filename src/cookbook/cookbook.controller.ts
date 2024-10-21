@@ -95,8 +95,19 @@ export class CookbookController {
     return this.cookbookService.delete(+cookbookId)
   }
 
-  
-  //TODO Leave cookbook
+  // Leave cookbook
+  @UseGuards(CookbookRolesGuard)
+  @CookbookRoles([COOKBOOK_ROLES.EDITOR, COOKBOOK_ROLES.VIEWER])
+  @Post('/leave/:cookbookId')
+  leaveCookbook(
+    @Param('cookbookId') cookbookId: string,
+    @GetUser('id') userId: number,
+  ) {
+    return this.cookbookService.leave(
+      +cookbookId,
+      userId,
+    );
+  }
 
   //TODO Remove recipe from cookbook
   

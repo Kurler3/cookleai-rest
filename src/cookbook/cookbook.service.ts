@@ -255,4 +255,28 @@ export class CookbookService {
     }
 
   }
+
+  // Leave cookbook
+  async leave(
+    cookbookId: number,
+    userId: number,
+  ) {
+
+    // Delete the relationship between the cookbook and the user.
+    await this.prismaService.usersOnCookBooks.delete({
+      where: {
+        cookbookId_userId: {
+          cookbookId,
+          userId,
+        }
+      }
+    });
+
+    return {
+      message: 'You\'ve left this cookbook successfully!'
+    }
+
+  }
+
+
 }
