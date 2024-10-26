@@ -1,16 +1,22 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateCookbookDto } from './dto/create-cookbook.dto';
 import { IPagination, ISelection } from 'src/types';
-import { CookBook, Prisma, UsersOnCookBooks } from '@prisma/client';
+import { CookBook, CookBookToRecipes, Prisma, Recipe, UsersOnCookBooks } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { COOKBOOK_ROLES } from 'src/utils/constants';
+import { COOKBOOK_ROLES, ENV_VARS } from 'src/utils/constants';
 import { UpdateCookbookDto } from './dto/update-cookbook.dto';
+import { SupabaseService } from '../supabase/supabase.service';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class CookbookService {
 
 
-  constructor(private prismaService: PrismaService) { }
+  constructor(
+    private prismaService: PrismaService,
+    private supabaseService: SupabaseService,
+    private configService: ConfigService,
+  ) { }
 
   // Add recipe to cookbook.
   async addRecipeToCookbook(
@@ -169,6 +175,8 @@ export class CookbookService {
                 recipe: {
                   select: {
                     imageUrl: true,
+                    imagePath: true,
+                    isPublic: true,
                   }
                 }
               }
@@ -188,13 +196,35 @@ export class CookbookService {
 
     const userCookbookPermissions = await this.prismaService.usersOnCookBooks.findMany(queryParams);
 
-    const userCookbooks = userCookbookPermissions.map(
-      (ur: UsersOnCookBooks & { cookbook: CookBook }) => ({
-        ...ur.cookbook,
-        role: ur.role,
-        addedAt: ur.addedAt,
-      })
-    );
+    const userCookbooks = await Promise.all(
+      userCookbookPermissions.map(
+        async (ur: UsersOnCookBooks & { cookbook: CookBook & { recipes: (CookBookToRecipes & { recipe: Recipe })[] } }) => {
+  
+          const cookbook = ur.cookbook;
+          
+          // If the cookbook has a recipe, and this recipe is private => generate a pre signed url for it.
+          if(cookbook.recipes?.length > 0) {
+            
+            const recipe = cookbook.recipes[0].recipe;
+
+            if(!recipe.isPublic && recipe.imagePath) {
+              recipe.imageUrl = await this.supabaseService.generatePreSignedUrl({
+                bucket: this.configService.get(ENV_VARS.PRIVATE_IMAGES_BUCKET),
+                path: recipe.imagePath,
+              })
+            }
+  
+          }
+  
+          return {
+            ...ur.cookbook,
+            role: ur.role,
+            addedAt: ur.addedAt,
+          }
+  
+        }
+      )
+    )
 
     return userCookbooks;
   };
