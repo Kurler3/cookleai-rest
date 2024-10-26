@@ -137,7 +137,7 @@ export class CookbookService {
             } : {
               id: true,
               title: true,
-              image: true,
+              imageUrl: true,
               isPublic: true,
               createdAt: true,
               updatedAt: true,
@@ -168,7 +168,7 @@ export class CookbookService {
               include: {
                 recipe: {
                   select: {
-                    image: true,
+                    imageUrl: true,
                   }
                 }
               }

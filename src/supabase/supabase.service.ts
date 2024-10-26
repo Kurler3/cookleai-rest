@@ -49,6 +49,9 @@ export class SupabaseService {
     const { error } = await this.supabase.storage.from(sourceBucket).move(path, path, { destinationBucket });
 
     if(error) {
+
+      console.log("Error while moving file between buckets: ", error)
+
       throw new BadRequestException('Error while moving file between buckets');
     }
 

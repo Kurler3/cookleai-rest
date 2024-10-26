@@ -45,7 +45,6 @@ export const GEMINI_MODEL_CONTEXT = JSON.stringify({
     example: JSON.stringify({
         title: "Spaghetti Carbonara",
         description: "A classic Italian pasta dish made with eggs, cheese, pancetta, and pepper.",
-        image: "https://example.com/spaghetti-carbonara.jpg",
         isPublic: true,
         servings: "4",
         notes: "Use freshly grated Parmesan for the best flavor.",

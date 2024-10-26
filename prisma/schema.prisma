@@ -74,7 +74,7 @@ model CookBook {
   id       Int     @id @default(autoincrement())
   title    String
   isPublic Boolean @default(false)
-  image    String?
+  imageUrl    String?
 
   // Users
   users UsersOnCookBooks[]
@@ -101,8 +101,8 @@ model Recipe {
   title       String
   description String?
   isPublic    Boolean @default(false)
-  imageUrl    String? // Will be defined if there's an image and the recipe is public.
-  imagePath   String? // Will be defined if there's an image.
+  imageUrl    String? // Will be defined if there's an imageUrl and the recipe is public.
+  imagePath   String? // Will be defined if there's an imageUrl.
   servings    String?
   notes       String?
   prepTime    Int?

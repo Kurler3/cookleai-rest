@@ -248,7 +248,7 @@ export class RecipeService {
 
     }
 
-    // If changing the isPublic key and there's an image attached and not making imageUrl null => change the place of the image in storage
+    // If changing the isPublic key and there's an imageUrl attached and not making imageUrl null => change the place of the image in storage
     if(('isPublic' in updateRecipeDto) && !!currentRecipe.imagePath && !('imageUrl' in updateRecipeDto)) {
 
       // Change the image place depending on whether the isPublic is now true or false. 
@@ -302,7 +302,8 @@ export class RecipeService {
       await this.supabaseService.deleteFile(
         bucket, 
         recipe.imagePath
-      )
+      );
+
     }
 
     const {
@@ -314,6 +315,8 @@ export class RecipeService {
       `/recipes/${recipeId}/${uuid()}`,
       recipe.isPublic,
     );
+
+    console.log('file path: ', newImagePath, newImageUrl);
 
     // Update the recipe
     await this.prismaService.recipe.update({
@@ -327,10 +330,9 @@ export class RecipeService {
     });
 
     return {
-      data: newImageUrl,
+      data: newImageUrl ?? null,
     }
   }
-
 
   // Function to change recipe image visibility
   async changeRecipeImageVisibility({
@@ -343,6 +345,8 @@ export class RecipeService {
 
     let publicImageUrl: string | null;
 
+    console.log({imagePath})
+
     // Move file between buckets
     await this.supabaseService.moveFile({
       sourceBucket: isPublic ? ENV_VARS.PRIVATE_IMAGES_BUCKET : ENV_VARS.PUBLIC_IMAGES_BUCKET,
@@ -350,7 +354,7 @@ export class RecipeService {
       path: imagePath,
     });
 
-    // If is public now => get the public image url
+    // If is public now => get the public imageUrl url
     if(isPublic) {
       publicImageUrl = await this.supabaseService.getFilePublicUrl({
         bucket: ENV_VARS.PRIVATE_IMAGES_BUCKET,
@@ -367,7 +371,6 @@ export class RecipeService {
       publicImageUrl,
     }
   }
-
 
   // Function to generate pre signed url for a given recipe image path.
 }
