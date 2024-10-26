@@ -86,7 +86,7 @@ export class RecipeService {
     // Check quota.
     const quota = await this.quotaService.getQuotaByType(user.id, "AI");
 
-    if(quota.used >= quota.limit) {
+    if (quota.used >= quota.limit) {
       throw new UnauthorizedException('You have exceeded your AI quota. Please try again tomorrow.');
     }
 
@@ -126,8 +126,15 @@ export class RecipeService {
       }
     });
 
-    //TODO - Generate pre signed url for recipe's image if has one.
+    // Generate pre signed url for recipe's image if has one and is private.
+    if(!recipe.isPublic && recipe.imagePath) {
 
+      recipe.imageUrl = await this.supabaseService.generatePreSignedUrl({
+        bucket: this.configService.get(ENV_VARS.PRIVATE_IMAGES_BUCKET),
+        path: recipe.imagePath,
+      });
+
+    }
 
     // Return the recipe, along with the role of this user in the recipe
     return { ...recipe, role };
@@ -136,23 +143,46 @@ export class RecipeService {
   // Delete recipe
   async remove(recipeId: number) {
 
-    await this.prismaService.recipe.delete({
+    // Get the recipe's public status
+    const {
+      isPublic,
+      imagePath,
+    } = await this.prismaService.recipe.findUnique({
       where: {
         id: recipeId,
       },
+      select: {
+        imagePath: true,
+        isPublic: true,
+      }
     });
 
-    //TODO Remove image from storage if attached.
+    await Promise.all([
+
+      // Delete the recipe
+      this.prismaService.recipe.delete({
+        where: {
+          id: recipeId,
+        },
+      }),
+
+      // If there was an image attached to this recipe => delete it from storage.
+      !!imagePath ? this.supabaseService.deleteFile(
+        this.configService.get(isPublic ? ENV_VARS.PUBLIC_IMAGES_BUCKET : ENV_VARS.PRIVATE_IMAGES_BUCKET),
+        imagePath
+      ) : Promise.resolve("Success :D")
+    ])
+
+
 
     return {
       message: 'Recipe deleted successfully'
     }
   }
 
-
   // Get user recipes
   async findMyRecipes({
-    userId, 
+    userId,
     pagination,
     title,
     cuisine,
@@ -199,9 +229,28 @@ export class RecipeService {
 
     const userRecipePermissions = await this.prismaService.usersOnRecipes.findMany(queryParams);
 
-    const userRecipes = userRecipePermissions.map((ur: UsersOnRecipes & { recipe: Recipe }) => ({ ...ur.recipe, role: ur.role, addedAt: ur.addedAt }));
+    const userRecipes = await Promise.all(
+      userRecipePermissions.map(async (ur: UsersOnRecipes & { recipe: Recipe }) => {
 
-    //TODO - For every recipe, if private and has an image => generate a pre signed url
+        const recipe = ur.recipe;
+  
+        // if private and has an image => generate a pre signed url
+        if(!recipe.isPublic && recipe.imagePath) {
+  
+          recipe.imageUrl = await this.supabaseService.generatePreSignedUrl({
+            bucket: this.configService.get(ENV_VARS.PRIVATE_IMAGES_BUCKET),
+            path: recipe.imagePath,
+          });
+          
+        }
+  
+        return { 
+          ...recipe, 
+          role: ur.role, 
+          addedAt: ur.addedAt 
+        }
+      })
+    )
 
     return userRecipes;
 
@@ -249,11 +298,11 @@ export class RecipeService {
     }
 
     // If changing the isPublic key and there's an imageUrl attached and not making imageUrl null => change the place of the image in storage
-    if(('isPublic' in updateRecipeDto) && !!currentRecipe.imagePath && !('imageUrl' in updateRecipeDto)) {
+    if (('isPublic' in updateRecipeDto) && !!currentRecipe.imagePath && !('imageUrl' in updateRecipeDto)) {
 
       // Change the image place depending on whether the isPublic is now true or false. 
       const {
-        publicImageUrl 
+        publicImageUrl
       } = await this.changeRecipeImageVisibility({
         isPublic: updateRecipeDto.isPublic,
         imagePath: currentRecipe.imagePath,
@@ -295,18 +344,18 @@ export class RecipeService {
       }
     });
 
-    const bucket = this.configService.get(recipe.isPublic ? ENV_VARS.PUBLIC_IMAGES_BUCKET : ENV_VARS.PRIVATE_IMAGES_BUCKET)
+    const bucket = this.configService.get(recipe.isPublic ? ENV_VARS.PUBLIC_IMAGES_BUCKET : ENV_VARS.PRIVATE_IMAGES_BUCKET) as string;
 
     if (recipe.imagePath) {
 
       await this.supabaseService.deleteFile(
-        bucket, 
+        bucket,
         recipe.imagePath
       );
 
     }
 
-    const {
+    let {
       publicUrl: newImageUrl,
       filePath: newImagePath,
     } = await this.supabaseService.uploadFile(
@@ -329,8 +378,16 @@ export class RecipeService {
       },
     });
 
+    // Generate a pre-signed url if the recipe is private.
+    if(!recipe.isPublic) {
+      newImageUrl = await this.supabaseService.generatePreSignedUrl({
+        bucket,
+        path: newImagePath,
+      });
+    }
+
     return {
-      data: newImageUrl ?? null,
+      data: newImageUrl,
     }
   }
 
@@ -345,25 +402,29 @@ export class RecipeService {
 
     let publicImageUrl: string | null;
 
-    console.log({imagePath})
-
     // Move file between buckets
     await this.supabaseService.moveFile({
-      sourceBucket: isPublic ? ENV_VARS.PRIVATE_IMAGES_BUCKET : ENV_VARS.PUBLIC_IMAGES_BUCKET,
-      destinationBucket: isPublic ? ENV_VARS.PUBLIC_IMAGES_BUCKET : ENV_VARS.PRIVATE_IMAGES_BUCKET,
+      sourceBucket: this.configService.get(isPublic ? ENV_VARS.PRIVATE_IMAGES_BUCKET : ENV_VARS.PUBLIC_IMAGES_BUCKET),
+      destinationBucket: this.configService.get(isPublic ? ENV_VARS.PUBLIC_IMAGES_BUCKET : ENV_VARS.PRIVATE_IMAGES_BUCKET),
       path: imagePath,
     });
 
     // If is public now => get the public imageUrl url
-    if(isPublic) {
+    if (isPublic) {
       publicImageUrl = await this.supabaseService.getFilePublicUrl({
-        bucket: ENV_VARS.PRIVATE_IMAGES_BUCKET,
+        bucket: this.configService.get(ENV_VARS.PUBLIC_IMAGES_BUCKET),
         path: imagePath,
       });
 
-    // Else the image url will be null.
+      // Else the image url will be a signed url.
     } else {
-      publicImageUrl = null;
+
+      // Generate the image url!
+      publicImageUrl = await this.supabaseService.generatePreSignedUrl({
+        bucket: this.configService.get(ENV_VARS.PRIVATE_IMAGES_BUCKET),
+        path: imagePath,
+      })
+
     }
 
     // Returns optional public image url, depending on whether it's changing to public or to private.
@@ -372,5 +433,4 @@ export class RecipeService {
     }
   }
 
-  // Function to generate pre signed url for a given recipe image path.
 }

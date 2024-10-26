@@ -32,7 +32,7 @@ export class SupabaseService {
       .from(bucket)
       .getPublicUrl(path);
 
-      return publicUrl;
+    return publicUrl;
   }
 
   // Move file across buckets
@@ -48,10 +48,8 @@ export class SupabaseService {
 
     const { error } = await this.supabase.storage.from(sourceBucket).move(path, path, { destinationBucket });
 
-    if(error) {
-
+    if (error) {
       console.log("Error while moving file between buckets: ", error)
-
       throw new BadRequestException('Error while moving file between buckets');
     }
 
@@ -69,22 +67,22 @@ export class SupabaseService {
   // Upload file and return the url
   async uploadFile(
     bucket: string,
-    file: Express.Multer.File, 
+    file: Express.Multer.File,
     path: string,
-    getPublicUrl=false,
+    getPublicUrl = false,
   ) {
     try {
-        
+
       // Upload the file
       const { data, error } = await this.supabase.storage
         .from(bucket)
         .upload(
-            path, 
-            file.buffer, 
-            {
-                contentType: file.mimetype,
-                upsert: true,
-            }
+          path,
+          file.buffer,
+          {
+            contentType: file.mimetype,
+            upsert: true,
+          }
         );
 
       if (error) {
@@ -94,18 +92,18 @@ export class SupabaseService {
 
       let publicUrl: string;
 
-      if(getPublicUrl) {
-          // Get the public url
+      if (getPublicUrl) {
+        // Get the public url
         const {
           data: { publicUrl: newPublicUrl },
         } = this.supabase.storage
           .from(bucket)
           .getPublicUrl(data.path);
-        
+
         publicUrl = newPublicUrl;
 
       }
-      
+
 
       return {
         publicUrl,
@@ -120,24 +118,55 @@ export class SupabaseService {
     }
   }
 
-  // Add user to auth
-  async createUser(
-    email: string,
-    name: {
-      givenName: string;
-      familyName: string;
-    },
-    photo: string,
-  ) {
 
-    return await this.supabase.auth.admin.createUser({
-      email,
-      email_confirm: true,
-      user_metadata: {
-        full_name: `${name.givenName} ${name.familyName}`,
-        avatar_url: photo,
+  // Generate pre-signed url for a given file.
+  async generatePreSignedUrl({
+    bucket,
+    path,
+    duration=60 * 5 // By default, 5 minutes
+  }: {
+    bucket: string;
+    path: string;
+    duration?: number;
+  }) {
+
+    const { 
+      error,
+      data: {
+          signedUrl,
       }
-    })
+     } = await this.supabase.storage.from(bucket).createSignedUrl(path, duration);
 
-  }
+     if(error) {
+      console.error("Error while generating presigned url: ", error);
+      throw new BadRequestException('Error while generating presigned url')
+     }
+
+     return signedUrl;
+  } 
+
+
+  
+
+  // // Add user to auth
+  // async createUser(
+  //   email: string,
+  //   name: {
+  //     givenName: string;
+  //     familyName: string;
+  //   },
+  //   photo: string,
+  // ) {
+
+  //   return await this.supabase.auth.admin.createUser({
+  //     email,
+  //     email_confirm: true,
+  //     user_metadata: {
+  //       full_name: `${name.givenName} ${name.familyName}`,
+  //       avatar_url: photo,
+  //     }
+  //   })
+
+  // }
+
 }

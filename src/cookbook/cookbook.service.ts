@@ -137,7 +137,7 @@ export class CookbookService {
             } : {
               id: true,
               title: true,
-              imageUrl: true,
+              image: true,
               isPublic: true,
               createdAt: true,
               updatedAt: true,
