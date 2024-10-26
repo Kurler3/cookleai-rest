@@ -12,10 +12,6 @@ export class CreateRecipeDto {
     @IsOptional()
     description?: string
 
-    @IsUrl()
-    @IsOptional()
-    image?: string
-
     @IsBoolean()
     @IsOptional()
     isPublic?: boolean;

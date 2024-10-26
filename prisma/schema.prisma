@@ -57,19 +57,18 @@ model User {
 
 // Quota
 model UserQuota {
-  userId             Int 
-  used               Int 
+  userId             Int
+  used               Int
   limit              Int
   type               String // Type of quota: ai, etc...
-  isResettable       Boolean   // Indicates if the quota is resettable
-  resetFrequency     String  // Enum to indicate how often the quota resets
+  isResettable       Boolean // Indicates if the quota is resettable
+  resetFrequency     String // Enum to indicate how often the quota resets
   lastResetTimestamp DateTime // Timestamp of the last quota reset, will be used to reset each day.
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([userId, type])
 }
-
 
 model CookBook {
   id       Int     @id @default(autoincrement())
@@ -102,7 +101,8 @@ model Recipe {
   title       String
   description String?
   isPublic    Boolean @default(false)
-  image       String?
+  imageUrl    String? // Will be defined if there's an image and the recipe is public.
+  imagePath   String? // Will be defined if there's an image.
   servings    String?
   notes       String?
   prepTime    Int?

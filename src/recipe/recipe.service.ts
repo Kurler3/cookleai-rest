@@ -1,8 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, UseFilters } from '@nestjs/common';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { UpdateRecipeDto } from './dto/update-recipe.dto';
 import { PrismaService } from '../prisma/prisma.service';
-import { RECIPE_ROLES } from 'src/utils/constants';
+import { ENV_VARS, RECIPE_ROLES } from 'src/utils/constants';
 import { IPagination } from 'src/types';
 import { Prisma, Recipe, User, UsersOnRecipes } from '@prisma/client';
 import { SupabaseService } from 'src/supabase/supabase.service';
@@ -10,6 +10,7 @@ import { v4 as uuid } from 'uuid';
 import { GeminiService } from 'src/gemini/gemini.service';
 import { QuotaService } from '../quota/quota.service';
 import { IFindMyRecipesInput } from "../types/recipe.type";
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class RecipeService {
@@ -18,12 +19,9 @@ export class RecipeService {
     private prismaService: PrismaService,
     private supabaseService: SupabaseService,
     private geminiService: GeminiService,
-    private quotaService: QuotaService
+    private quotaService: QuotaService,
+    private configService: ConfigService,
   ) { }
-
-  getRecipeImageKey(recipeImage: string) {
-    return recipeImage.split('/').slice(recipeImage.split('/').length - 3,).join('/');
-  }
 
   async updateRecipe(
     recipeId: number,
@@ -128,6 +126,9 @@ export class RecipeService {
       }
     });
 
+    //TODO - Generate pre signed url for recipe's image if has one.
+
+
     // Return the recipe, along with the role of this user in the recipe
     return { ...recipe, role };
   }
@@ -140,6 +141,8 @@ export class RecipeService {
         id: recipeId,
       },
     });
+
+    //TODO Remove image from storage if attached.
 
     return {
       message: 'Recipe deleted successfully'
@@ -172,7 +175,8 @@ export class RecipeService {
           select: {
             id: true,
             title: true,
-            image: true,
+            imageUrl: true,
+            imagePath: true,
             isPublic: true,
             createdAt: true,
             updatedAt: true,
@@ -197,6 +201,8 @@ export class RecipeService {
 
     const userRecipes = userRecipePermissions.map((ur: UsersOnRecipes & { recipe: Recipe }) => ({ ...ur.recipe, role: ur.role, addedAt: ur.addedAt }));
 
+    //TODO - For every recipe, if private and has an image => generate a pre signed url
+
     return userRecipes;
 
   }
@@ -208,35 +214,62 @@ export class RecipeService {
     role: string,
   ) {
 
-    // If reset the image => delete from storage.
-    if (updateRecipeDto.image === null) {
+    // Init a final recipe update object in order to further update some keys depending on the update the user wants to make.
+    // Making imagePath null depending on whether the user wants to reset the recipe's image is an example.
+    const finalRecipeUpdateObject: Partial<Recipe> = { ...updateRecipeDto };
 
-      // Get current recipe image (before updating)
-      const currentRecipe = await this.prismaService.recipe.findUnique({
-        where: {
-          id: recipeId,
-        },
-        select: {
-          image: true,
-        }
-      });
+    // Get current recipe image (before updating)
+    const currentRecipe = await this.prismaService.recipe.findUnique({
+      where: {
+        id: recipeId,
+      },
+      select: {
+        imagePath: true,
+        isPublic: true,
+      }
+    });
+
+    // If reset the image => delete from storage.
+    if ('imageUrl' in updateRecipeDto && updateRecipeDto.imageUrl === null) {
 
       // If had an image prior to resetting it => delete it from storage.
-      if (currentRecipe.image) {
+      if (currentRecipe.imagePath) {
 
-        const imageKey = this.getRecipeImageKey(currentRecipe.image);
+        // Delete the image.
+        await this.supabaseService.deleteFile(
+          this.configService.get(currentRecipe.isPublic ? ENV_VARS.PUBLIC_IMAGES_BUCKET : ENV_VARS.PRIVATE_IMAGES_BUCKET),
+          currentRecipe.imagePath,
+        );
 
-        await this.supabaseService.deleteFile(imageKey);
+        // Set the new image path to null.
+        finalRecipeUpdateObject.imagePath = null;
 
       }
 
     }
 
+    // If changing the isPublic key and there's an image attached and not making imageUrl null => change the place of the image in storage
+    if(('isPublic' in updateRecipeDto) && !!currentRecipe.imagePath && !('imageUrl' in updateRecipeDto)) {
+
+      // Change the image place depending on whether the isPublic is now true or false. 
+      const {
+        publicImageUrl 
+      } = await this.changeRecipeImageVisibility({
+        isPublic: updateRecipeDto.isPublic,
+        imagePath: currentRecipe.imagePath,
+      });
+
+      // publicImageUrl could be either null or an actual url, depending on which visibility status the recipe is changing to.
+      finalRecipeUpdateObject.imageUrl = publicImageUrl;
+
+    }
+
+    // Update the recipe.
     const updatedRecipe = await this.prismaService.recipe.update({
       where: {
         id: recipeId,
       },
-      data: updateRecipeDto,
+      data: finalRecipeUpdateObject,
       include: {
         createdByUser: true,
       }
@@ -262,28 +295,79 @@ export class RecipeService {
       }
     });
 
-    if (recipe.image) {
+    const bucket = this.configService.get(recipe.isPublic ? ENV_VARS.PUBLIC_IMAGES_BUCKET : ENV_VARS.PRIVATE_IMAGES_BUCKET)
 
-      const imageKey = recipe.image.split('/').slice(recipe.image.split('/').length - 3,).join('/');
+    if (recipe.imagePath) {
 
-      await this.supabaseService.deleteFile(imageKey)
+      await this.supabaseService.deleteFile(
+        bucket, 
+        recipe.imagePath
+      )
     }
 
-    const newImageUrl = await this.supabaseService.uploadFile(
+    const {
+      publicUrl: newImageUrl,
+      filePath: newImagePath,
+    } = await this.supabaseService.uploadFile(
+      bucket,
       img,
       `/recipes/${recipeId}/${uuid()}`,
+      recipe.isPublic,
     );
-    // Update the recipe.
-    await this.updateRecipe(
-      recipeId,
-      {
-        image: newImageUrl,
-      }
-    )
+
+    // Update the recipe
+    await this.prismaService.recipe.update({
+      where: {
+        id: recipeId,
+      },
+      data: {
+        imageUrl: newImageUrl,
+        imagePath: newImagePath,
+      },
+    });
 
     return {
       data: newImageUrl,
     }
   }
 
+
+  // Function to change recipe image visibility
+  async changeRecipeImageVisibility({
+    isPublic, // If is going to be public or not
+    imagePath,
+  }: {
+    isPublic: boolean;
+    imagePath: string;
+  }) {
+
+    let publicImageUrl: string | null;
+
+    // Move file between buckets
+    await this.supabaseService.moveFile({
+      sourceBucket: isPublic ? ENV_VARS.PRIVATE_IMAGES_BUCKET : ENV_VARS.PUBLIC_IMAGES_BUCKET,
+      destinationBucket: isPublic ? ENV_VARS.PUBLIC_IMAGES_BUCKET : ENV_VARS.PRIVATE_IMAGES_BUCKET,
+      path: imagePath,
+    });
+
+    // If is public now => get the public image url
+    if(isPublic) {
+      publicImageUrl = await this.supabaseService.getFilePublicUrl({
+        bucket: ENV_VARS.PRIVATE_IMAGES_BUCKET,
+        path: imagePath,
+      });
+
+    // Else the image url will be null.
+    } else {
+      publicImageUrl = null;
+    }
+
+    // Returns optional public image url, depending on whether it's changing to public or to private.
+    return {
+      publicImageUrl,
+    }
+  }
+
+
+  // Function to generate pre signed url for a given recipe image path.
 }

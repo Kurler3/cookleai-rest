@@ -1,14 +1,12 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { truncate } from 'fs';
 
 @Injectable()
 export class SupabaseService {
   private readonly logger = new Logger(SupabaseService.name);
 
   private supabase: SupabaseClient;
-  private imagesBucketName: string;
 
   constructor(private configService: ConfigService) {
     if (!this.supabase) {
@@ -17,26 +15,66 @@ export class SupabaseService {
         this.configService.get('SUPABASE_SERVICE_ROLE_KEY'),
       );
     }
+  }
 
-    this.imagesBucketName = this.configService.get('IMAGES_BUCKET');
+  // Get file public url
+  async getFilePublicUrl({
+    bucket,
+    path,
+  }: {
+    bucket: string;
+    path: string;
+  }) {
+
+    const {
+      data: { publicUrl },
+    } = this.supabase.storage
+      .from(bucket)
+      .getPublicUrl(path);
+
+      return publicUrl;
+  }
+
+  // Move file across buckets
+  async moveFile({
+    sourceBucket,
+    destinationBucket,
+    path,
+  }: {
+    sourceBucket: string;
+    destinationBucket: string;
+    path: string;
+  }) {
+
+    const { error } = await this.supabase.storage.from(sourceBucket).move(path, path, { destinationBucket });
+
+    if(error) {
+      throw new BadRequestException('Error while moving file between buckets');
+    }
+
   }
 
   // Delete file
-  async deleteFile(path: string) {
+  async deleteFile(bucket: string, path: string) {
     try {
-      await this.supabase.storage.from(this.imagesBucketName).remove([path]);
+      await this.supabase.storage.from(bucket).remove([path]);
     } catch (error) {
       this.logger.error(`Error deleting file: ${error.message}`);
     }
   }
 
   // Upload file and return the url
-  async uploadFile(file: Express.Multer.File, path: string) {
+  async uploadFile(
+    bucket: string,
+    file: Express.Multer.File, 
+    path: string,
+    getPublicUrl=false,
+  ) {
     try {
         
       // Upload the file
       const { data, error } = await this.supabase.storage
-        .from(this.imagesBucketName)
+        .from(bucket)
         .upload(
             path, 
             file.buffer, 
@@ -50,14 +88,27 @@ export class SupabaseService {
         throw new BadRequestException(`Error uploading file: ${error.message}`);
       }
 
-      // Get the public url
-      const {
-        data: { publicUrl },
-      } = this.supabase.storage
-        .from(this.imagesBucketName)
-        .getPublicUrl(data.path);
 
-      return publicUrl;
+      let publicUrl: string;
+
+      if(getPublicUrl) {
+          // Get the public url
+        const {
+          data: { publicUrl: newPublicUrl },
+        } = this.supabase.storage
+          .from(bucket)
+          .getPublicUrl(data.path);
+        
+        publicUrl = newPublicUrl;
+
+      }
+      
+
+      return {
+        publicUrl,
+        filePath: data.path,
+      };
+
     } catch (error) {
       this.logger.error(`Error uploading file: ${error.message}`);
       this.logger.error(error.stack);
