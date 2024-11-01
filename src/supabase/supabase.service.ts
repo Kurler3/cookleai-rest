@@ -123,30 +123,28 @@ export class SupabaseService {
   async generatePreSignedUrl({
     bucket,
     path,
-    duration=60 * 5 // By default, 5 minutes
+    duration = 60 * 5 // By default, 5 minutes
   }: {
     bucket: string;
     path: string;
     duration?: number;
   }) {
 
-    const { 
+    const {
       error,
-      data: {
-          signedUrl,
-      }
-     } = await this.supabase.storage.from(bucket).createSignedUrl(path, duration);
+      data: signedUrlRes,
+    } = await this.supabase.storage.from(bucket).createSignedUrl(path, duration);
 
-     if(error) {
+    if (error) {
       console.error("Error while generating presigned url: ", error);
       throw new BadRequestException('Error while generating presigned url')
-     }
+    }
 
-     return signedUrl;
-  } 
+    return signedUrlRes.signedUrl;
+  }
 
 
-  
+
 
   // // Add user to auth
   // async createUser(
