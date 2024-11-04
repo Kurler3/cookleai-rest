@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateUserDto } from './dto/createUser.dto';
 import { RecipeService } from 'src/recipe/recipe.service';
@@ -57,5 +57,34 @@ export class UserService {
 
   async getQuotaByType(userId: number, quotaType: string) {
     return this.quotaService.getQuotaByType(userId, quotaType);
+  }
+
+  async search(
+    searchValue: string,
+  ) {
+
+    if(!searchValue) {
+      throw new BadRequestException('You need to provide a search term.');
+    }
+
+    const users = await this.prismaService.user.findMany({
+      where: {
+        OR: [
+          {
+            email: {
+              contains: searchValue,
+            }
+          },
+          {
+            fullName: {
+              contains: searchValue,
+            }
+          }
+        ]
+      }
+    });
+
+
+    return users;
   }
 }

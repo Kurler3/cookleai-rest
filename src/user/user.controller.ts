@@ -24,4 +24,13 @@ export class UserController {
     ) {
         return this.userService.getQuotaByType(userId, quotaType);
     }
+
+    // Search users.
+    @Get('search')
+    async search(
+        @Query('search') searchValue: string,
+    ) {
+        return this.userService.search(searchValue);
+    }
+
 }
