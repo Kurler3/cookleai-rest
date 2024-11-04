@@ -7,6 +7,7 @@ import { COOKBOOK_ROLES, ENV_VARS } from 'src/utils/constants';
 import { UpdateCookbookDto } from './dto/update-cookbook.dto';
 import { SupabaseService } from '../supabase/supabase.service';
 import { ConfigService } from '@nestjs/config';
+import { AddMembersDto } from './dto/add-members.dto';
 
 @Injectable()
 export class CookbookService {
@@ -199,29 +200,29 @@ export class CookbookService {
     const userCookbooks = await Promise.all(
       userCookbookPermissions.map(
         async (ur: UsersOnCookBooks & { cookbook: CookBook & { recipes: (CookBookToRecipes & { recipe: Recipe })[] } }) => {
-  
+
           const cookbook = ur.cookbook;
-          
+
           // If the cookbook has a recipe, and this recipe is private => generate a pre signed url for it.
-          if(cookbook.recipes?.length > 0) {
-            
+          if (cookbook.recipes?.length > 0) {
+
             const recipe = cookbook.recipes[0].recipe;
 
-            if(!recipe.isPublic && recipe.imagePath) {
+            if (!recipe.isPublic && recipe.imagePath) {
               recipe.imageUrl = await this.supabaseService.generatePreSignedUrl({
                 bucket: this.configService.get(ENV_VARS.PRIVATE_IMAGES_BUCKET),
                 path: recipe.imagePath,
               })
             }
-  
+
           }
-  
+
           return {
             ...ur.cookbook,
             role: ur.role,
             addedAt: ur.addedAt,
           }
-  
+
         }
       )
     )
@@ -308,5 +309,79 @@ export class CookbookService {
 
   }
 
+  // Add members
+  async addMembers(
+    currentUserId: number,
+    cookbookId: number,
+    body: AddMembersDto,
+  ) {
+
+    // Start a transaction
+    try {
+      await this.prismaService.$transaction(async (tx) => {
+
+        await Promise.all(
+          body.members.map(async ({ role, userId }) => {
+
+            // If trying to add himself => error.
+            if (currentUserId === userId) {
+              throw new BadRequestException('You cannot add yourself as a member');
+            }
+
+            // Check if the user exists
+            const userExists = await tx.user.findUnique({
+              where: { id: userId },
+            });
+
+            if (!userExists) {
+              throw new BadRequestException(`User with ID ${userId} does not exist`);
+            }
+
+            // Check if the user is already a member of the cookbook
+            const alreadyMember = await tx.usersOnCookBooks.findUnique({
+              where: {
+                cookbookId_userId: {
+                  cookbookId: cookbookId,
+                  userId: userId,
+                },
+              },
+            });
+
+            if (!alreadyMember) {
+              // Create the membership record if the user is not already a member
+              await tx.usersOnCookBooks.create({
+                data: {
+                  cookbook: {
+                    connect: {
+                      id: cookbookId,
+                    }
+                  },
+                  user: {
+                    connect: {
+                      id: userId,
+                    }
+                  },
+                  role,
+                  addedBy: currentUserId,
+                },
+              });
+            }
+
+          })
+        )
+
+      });
+
+      // Return success message
+      return { message: 'Members added successfully.' };
+
+    } catch (error) {
+
+      console.error('Error while adding members:', error);
+      throw error;
+
+    }
+
+  }
 
 }

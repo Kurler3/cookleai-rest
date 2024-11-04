@@ -14,6 +14,7 @@ import { RecipeRoles } from 'src/decorators/RecipeRoles.decorator';
 import { CookbookRoles } from 'src/decorators/CookbookRoles.decorator';
 import { GetRole } from '../decorators/getRole.decorator';
 import { UpdateCookbookDto } from './dto/update-cookbook.dto';
+import { AddMembersDto } from './dto/add-members.dto';
 
 @UseGuards(JwtGuard)
 @Controller('cookbooks')
@@ -106,6 +107,22 @@ export class CookbookController {
     return this.cookbookService.leave(
       +cookbookId,
       userId,
+    );
+  }
+
+  // Add members
+  @UseGuards(CookbookRolesGuard)
+  @CookbookRoles([COOKBOOK_ROLES.OWNER])
+  @Post('/add-members/:cookbookId')
+  addMembers(
+    @GetUser('id') currentUserId: number,
+    @Param('cookbookId') cookbookId: string,
+    @Body() body: AddMembersDto,
+  ) {
+    return this.cookbookService.addMembers(
+      currentUserId,
+      +cookbookId,
+      body,
     );
   }
 
