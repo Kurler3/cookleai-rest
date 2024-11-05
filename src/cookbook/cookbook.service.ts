@@ -3,7 +3,7 @@ import { CreateCookbookDto } from './dto/create-cookbook.dto';
 import { IPagination, ISelection } from 'src/types';
 import { CookBook, CookBookToRecipes, Prisma, Recipe, UsersOnCookBooks } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { COOKBOOK_ROLES, ENV_VARS } from 'src/utils/constants';
+import { COOKBOOK_ROLES, ENV_VARS, RECIPE_ROLES } from 'src/utils/constants';
 import { UpdateCookbookDto } from './dto/update-cookbook.dto';
 import { SupabaseService } from '../supabase/supabase.service';
 import { ConfigService } from '@nestjs/config';
@@ -145,7 +145,7 @@ export class CookbookService {
             } : {
               id: true,
               title: true,
-              image: true,
+              imageUrl: true,
               isPublic: true,
               createdAt: true,
               updatedAt: true,
@@ -386,7 +386,6 @@ export class CookbookService {
   }
 
   async getCookbookRecipes({
-    cookbookRole,
     userId,
     cookbookId,
     pagination,
@@ -466,8 +465,7 @@ export class CookbookService {
           }
         });
 
-        const role = userRecipePermission?.role || cookbookRole;
-
+        const role = userRecipePermission?.role ?? RECIPE_ROLES.VIEWER;
 
         return {
           ...recipe,
