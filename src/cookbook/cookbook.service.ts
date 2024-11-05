@@ -481,4 +481,40 @@ export class CookbookService {
 
   }
 
+
+  // Remove recipe from cookbook
+  async removeRecipeFromCookbook({
+    cookbookId,
+    recipeId,
+  }: {
+    cookbookId: number,
+    recipeId: number,
+  }) {
+
+    // Check if recipe actually exists
+    const recipeExists = !!(await this.prismaService.recipe.findUnique({
+      where: {
+        id: recipeId,
+      }
+    }));
+
+    if(!recipeExists) {
+      throw new BadRequestException('Recipe does not exist!');
+    }
+
+    await this.prismaService.cookBookToRecipes.delete({
+      where: {
+        cookbookId_recipeId: {
+          cookbookId,
+          recipeId,
+        }
+      }
+    });
+
+    return {
+      message: 'Recipe removed from cookbook successfully!'
+    }
+
+  }
+
 }

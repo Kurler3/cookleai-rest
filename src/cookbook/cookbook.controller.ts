@@ -15,6 +15,7 @@ import { CookbookRoles } from 'src/decorators/CookbookRoles.decorator';
 import { GetRole } from '../decorators/getRole.decorator';
 import { UpdateCookbookDto } from './dto/update-cookbook.dto';
 import { AddMembersDto } from './dto/add-members.dto';
+import { RemoveRecipeDto } from './dto/remove-recipe.dto';
 
 @UseGuards(JwtGuard)
 @Controller('cookbooks')
@@ -150,6 +151,18 @@ export class CookbookController {
     });
   }
 
-  //TODO Remove recipe from cookbook
+  // Remove recipe from cookbook
+  @UseGuards(CookbookRolesGuard)
+  @CookbookRoles([COOKBOOK_ROLES.OWNER, COOKBOOK_ROLES.EDITOR])
+  @Delete(':cookbookId/remove-recipe')
+  removeRecipeFromCookbook(
+    @Param('cookbookId', ParseIntPipe) cookbookId: number,
+    @Body() removeRecipeDto: RemoveRecipeDto,
+  ) {
+    return this.cookbookService.removeRecipeFromCookbook({
+      cookbookId,
+      recipeId: removeRecipeDto.recipeId
+    });
+  }
   
 }
