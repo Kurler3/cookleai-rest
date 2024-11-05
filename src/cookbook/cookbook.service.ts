@@ -8,6 +8,7 @@ import { UpdateCookbookDto } from './dto/update-cookbook.dto';
 import { SupabaseService } from '../supabase/supabase.service';
 import { ConfigService } from '@nestjs/config';
 import { AddMembersDto } from './dto/add-members.dto';
+import { IGetCookbookRecipesInput } from '../types/cookbook.types';
 
 @Injectable()
 export class CookbookService {
@@ -381,6 +382,104 @@ export class CookbookService {
       throw error;
 
     }
+
+  }
+
+  async getCookbookRecipes({
+    cookbookRole,
+    userId,
+    cookbookId,
+    pagination,
+    title,
+    cuisine,
+    difficulty,
+  }: IGetCookbookRecipesInput) {
+
+
+    const whereFilter: Prisma.CookBookToRecipesWhereInput = {
+      cookbookId,
+      recipe: {
+        ...(title && { title: { contains: title } }),
+        ...(cuisine && { cuisine: { equals: cuisine } }),
+        ...(difficulty && { difficulty: { equals: difficulty } }),
+      }
+    };
+
+    const queryParams: Prisma.CookBookToRecipesFindManyArgs = {
+      where: whereFilter,
+      include: {
+        recipe: {
+          select: {
+            id: true,
+            title: true,
+            imageUrl: true,
+            imagePath: true,
+            isPublic: true,
+            createdAt: true,
+            updatedAt: true,
+            createdByUser: true,
+          },
+        },
+      },
+      // Order by time of creation of the recipe, from newest to oldest.
+      orderBy: {
+        recipe: {
+          createdAt: 'desc',
+        }
+      }
+    };
+
+    if (pagination) {
+      queryParams.skip = pagination.page * pagination.limit;
+      queryParams.take = pagination.limit;
+    }
+
+    // Get all recipes on cookbook
+    const recipesOnCookbook = await this.prismaService.cookBookToRecipes.findMany(queryParams);
+
+    // For each recipe
+      // If private => generate a presigned url for the image
+      // Get the role of the current user on the recipe.
+    const recipes = await Promise.all(
+      recipesOnCookbook.map(async (
+        recipeOnCookbook: CookBookToRecipes & { recipe: Recipe }
+      ) => {
+
+        const recipe = recipeOnCookbook.recipe;
+
+        // If private and has image => generate pre signed url
+        if(!recipe.isPublic && recipe.imagePath) {
+          recipe.imageUrl = await this.supabaseService.generatePreSignedUrl({
+            bucket: this.configService.get(ENV_VARS.PRIVATE_IMAGES_BUCKET),
+            path: recipe.imagePath,
+          });
+        }
+
+        // Get role of the current user on the recipe.
+        const userRecipePermission = await this.prismaService.usersOnRecipes.findFirst({
+          where: {
+            recipeId: recipe.id,
+            userId,
+          },
+          select: {
+            role: true,
+          }
+        });
+
+        const role = userRecipePermission?.role || cookbookRole;
+
+
+        return {
+          ...recipe,
+          role,
+        }
+
+      }),
+    )
+
+
+    // Return recipes.
+    return recipes;
 
   }
 

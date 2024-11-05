@@ -108,12 +108,12 @@ export class CookbookController {
       +cookbookId,
       userId,
     );
-  }
+  } 
 
   // Add members
   @UseGuards(CookbookRolesGuard)
   @CookbookRoles([COOKBOOK_ROLES.OWNER])
-  @Post('/add-members/:cookbookId')
+  @Post(':cookbookId/add-members')
   addMembers(
     @GetUser('id') currentUserId: number,
     @Param('cookbookId') cookbookId: string,
@@ -124,6 +124,30 @@ export class CookbookController {
       +cookbookId,
       body,
     );
+  }
+
+  // Get recipes for the cookbook
+  @UseGuards(CookbookRolesGuard)
+  @CookbookRoles([COOKBOOK_ROLES.OWNER, COOKBOOK_ROLES.EDITOR, COOKBOOK_ROLES.VIEWER])
+  @Get('/:cookbookId/recipes')
+  getCookbookRecipes(
+    @GetPagination() pagination?: IPagination,
+    @Query('title') title?: string,
+    @Query('cuisine') cuisine?: string,
+    @Query('difficulty') difficulty?: string,
+    @GetRole() cookbookRole?: string,
+    @GetUser('id') userId?: number,
+    @Param('cookbookId', ParseIntPipe) cookbookId?: number
+  ) {
+    return this.cookbookService.getCookbookRecipes({
+      pagination,
+      title,
+      cuisine,
+      difficulty,
+      cookbookRole,
+      userId,
+      cookbookId,
+    });
   }
 
   //TODO Remove recipe from cookbook
