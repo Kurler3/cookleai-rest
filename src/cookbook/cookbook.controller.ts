@@ -16,6 +16,7 @@ import { GetRole } from '../decorators/getRole.decorator';
 import { UpdateCookbookDto } from './dto/update-cookbook.dto';
 import { AddMembersDto } from './dto/add-members.dto';
 import { RemoveRecipeDto } from './dto/remove-recipe.dto';
+import { EditMembersDto } from './dto/edit-members.dto';
 
 @UseGuards(JwtGuard)
 @Controller('cookbooks')
@@ -127,6 +128,24 @@ export class CookbookController {
     );
   }
 
+  // Edit members
+  @UseGuards(CookbookRolesGuard)
+  @CookbookRoles([COOKBOOK_ROLES.OWNER])
+  @Post(':cookbookId/edit-members')
+  editMembers(
+    @GetUser('id') currentUserId: number,
+    @Param('cookbookId') cookbookId: string,
+    @Body() body: EditMembersDto,
+  ) {
+    return this.cookbookService.editMembers(
+      currentUserId,
+      +cookbookId,
+      body,
+    );
+  }
+
+  //TODO Remove members.
+
   // Get recipes for the cookbook
   @UseGuards(CookbookRolesGuard)
   @CookbookRoles([COOKBOOK_ROLES.OWNER, COOKBOOK_ROLES.EDITOR, COOKBOOK_ROLES.VIEWER])
@@ -165,4 +184,6 @@ export class CookbookController {
     });
   }
   
+
+
 }

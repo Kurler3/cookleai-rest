@@ -9,6 +9,7 @@ import { SupabaseService } from '../supabase/supabase.service';
 import { ConfigService } from '@nestjs/config';
 import { AddMembersDto } from './dto/add-members.dto';
 import { IGetCookbookRecipesInput } from '../types/cookbook.types';
+import { EditMembersDto } from './dto/edit-members.dto';
 
 @Injectable()
 export class CookbookService {
@@ -384,6 +385,39 @@ export class CookbookService {
     }
 
   }
+
+  //TODO Edit members
+  async editMembers(
+    currentUserId: number,
+    cookbookId: number,
+    body: EditMembersDto,
+  ) {
+
+    try {
+
+      await this.prismaService.$transaction(
+        async (tx) => {
+
+          //TODO
+          // For each member in the body
+            // Check if user id is the same as the current user (not allowed)
+            // Check if user actually exists
+            // Check if not member at all
+            // Check if actually needs to update, ie: not the same role already
+
+        }
+      )
+
+    } catch (error) {
+      console.error('Error while editing members:', error);
+      throw error;
+    }
+
+  }
+
+
+  //TODO Delete members
+  
 
   async getCookbookRecipes({
     userId,
