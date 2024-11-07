@@ -10,6 +10,7 @@ import { ConfigService } from '@nestjs/config';
 import { AddMembersDto } from './dto/add-members.dto';
 import { IGetCookbookRecipesInput } from '../types/cookbook.types';
 import { EditMembersDto } from './dto/edit-members.dto';
+import { RemoveMembersDto } from './dto/remove-members.dto';
 
 @Injectable()
 export class CookbookService {
@@ -325,31 +326,17 @@ export class CookbookService {
         await Promise.all(
           body.members.map(async ({ role, userId }) => {
 
-            // If trying to add himself => error.
-            if (currentUserId === userId) {
-              throw new BadRequestException('You cannot add yourself as a member');
-            }
+            // Check if user is not the same.
+            this.assertNotCurrentUser(currentUserId, userId);
 
             // Check if the user exists
-            const userExists = await tx.user.findUnique({
-              where: { id: userId },
-            });
+            await this.assertUserExists(tx, userId);
+            
+            // Get cookbook permission for user being added to check if he already exists or not
+            const cookbookPermission = await this.getCookbookPermission(tx, cookbookId, userId);
 
-            if (!userExists) {
-              throw new BadRequestException(`User with ID ${userId} does not exist`);
-            }
+            if (!cookbookPermission) {
 
-            // Check if the user is already a member of the cookbook
-            const alreadyMember = await tx.usersOnCookBooks.findUnique({
-              where: {
-                cookbookId_userId: {
-                  cookbookId: cookbookId,
-                  userId: userId,
-                },
-              },
-            });
-
-            if (!alreadyMember) {
               // Create the membership record if the user is not already a member
               await tx.usersOnCookBooks.create({
                 data: {
@@ -386,7 +373,7 @@ export class CookbookService {
 
   }
 
-  //TODO Edit members
+  // Edit members
   async editMembers(
     currentUserId: number,
     cookbookId: number,
@@ -394,30 +381,43 @@ export class CookbookService {
   ) {
 
     try {
-
       await this.prismaService.$transaction(
         async (tx) => {
-
-          //TODO
-          // For each member in the body
-            // Check if user id is the same as the current user (not allowed)
-            // Check if user actually exists
-            // Check if not member at all
-            // Check if actually needs to update, ie: not the same role already
-
+          await Promise.all(
+            body.members.map(async (member) => this.updateMemberRole(tx, currentUserId, cookbookId, member))
+          )
         }
       )
-
     } catch (error) {
       console.error('Error while editing members:', error);
-      throw error;
+      throw new BadRequestException('An error occurred while editing the members!');
     }
 
   }
 
 
-  //TODO Delete members
-  
+  // Delete members
+  async removeMembers(
+    currentUserId: number,
+    cookbookId: number,
+    body: RemoveMembersDto,
+  ) {
+
+    try {
+      await this.prismaService.$transaction(
+        async (tx) => {
+          await Promise.all(
+            body.userIds.map(async (userId) => this.deleteMemberFromCookbook(tx, currentUserId, cookbookId, userId))
+          )
+        }
+      )
+    } catch (error) {
+      console.error('Error while deleting members:', error);
+      throw new BadRequestException('An error occurred while deleting the members!');
+    }
+
+  }
+
 
   async getCookbookRecipes({
     userId,
@@ -471,8 +471,8 @@ export class CookbookService {
     const recipesOnCookbook = await this.prismaService.cookBookToRecipes.findMany(queryParams);
 
     // For each recipe
-      // If private => generate a presigned url for the image
-      // Get the role of the current user on the recipe.
+    // If private => generate a presigned url for the image
+    // Get the role of the current user on the recipe.
     const recipes = await Promise.all(
       recipesOnCookbook.map(async (
         recipeOnCookbook: CookBookToRecipes & { recipe: Recipe }
@@ -481,7 +481,7 @@ export class CookbookService {
         const recipe = recipeOnCookbook.recipe;
 
         // If private and has image => generate pre signed url
-        if(!recipe.isPublic && recipe.imagePath) {
+        if (!recipe.isPublic && recipe.imagePath) {
           recipe.imageUrl = await this.supabaseService.generatePreSignedUrl({
             bucket: this.configService.get(ENV_VARS.PRIVATE_IMAGES_BUCKET),
             path: recipe.imagePath,
@@ -532,7 +532,7 @@ export class CookbookService {
       }
     }));
 
-    if(!recipeExists) {
+    if (!recipeExists) {
       throw new BadRequestException('Recipe does not exist!');
     }
 
@@ -550,5 +550,117 @@ export class CookbookService {
     }
 
   }
+
+
+  // Helper function to delete a single member from the cookbook.
+  private async deleteMemberFromCookbook(
+    tx: Prisma.TransactionClient,
+    currentUserId: number,
+    cookbookId: number,
+    userId: number,
+  ) {
+
+     // Check that the user is not trying to delete himself.
+    this.assertNotCurrentUser(currentUserId, userId);
+
+    // Check that the user actually exists.
+    await this.assertUserExists(tx, userId);
+
+    // Get the current permission for the user being deleted in this cookbook
+    const permission = await this.getCookbookPermission(tx, cookbookId, userId);
+
+    // Delete the permission
+    await this.deleteMember(tx, cookbookId, userId, permission);
+  }
+
+  private async deleteMember(
+    tx: Prisma.TransactionClient,
+    cookbookId: number,
+    userId: number,
+    permission: UsersOnCookBooks
+  ) {
+
+    if(!permission) {
+      throw new BadRequestException(`User with ID ${userId} is not a member of this cookbook`);
+    }
+
+    await tx.usersOnCookBooks.delete({
+      where: {
+        cookbookId_userId: {
+          cookbookId,
+          userId,
+        }
+      }
+    });
+  }
+
+  // Helper function to update a single member's role
+  private async updateMemberRole(
+    tx: Prisma.TransactionClient,
+    currentUserId: number,
+    cookbookId: number,
+    { userId, role }: { userId: number, role: string },
+  ) {
+
+    // Check that the user is not trying to edit himself.
+    this.assertNotCurrentUser(currentUserId, userId);
+
+    // Check that the user actually exists.
+    await this.assertUserExists(tx, userId);
+
+    // Get the current permission for the user being edited in this cookbook
+    const permission = await this.getCookbookPermission(tx, cookbookId, userId);
+    
+    // Update the role if needed
+    await this.updateRoleIfDifferent(tx, permission, role, cookbookId, userId);
+
+  }
+
+  // Throw an error if the user is trying to edit their own role
+  private assertNotCurrentUser(currentUserId: number, userId: number) {
+    if (currentUserId === userId) {
+      throw new BadRequestException('You cannot edit yourself');
+    }
+  }
+
+  // Verify the user exists in the database
+  private async assertUserExists(tx: Prisma.TransactionClient, userId: number) {
+    const user = await tx.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      throw new BadRequestException(`User with ID ${userId} does not exist`);
+    }
+  }
+
+  // Get the user's current role in the cookbook, or throw an error if not a member
+  private async getCookbookPermission(
+    tx: Prisma.TransactionClient,
+    cookbookId: number,
+    userId: number,
+  ) {
+    const permission = await tx.usersOnCookBooks.findUnique({
+      where: { cookbookId_userId: { userId, cookbookId } },
+    });
+    if (!permission) {
+      throw new BadRequestException(`User with ID ${userId} is not a member of this cookbook`);
+    }
+    return permission;
+  }
+
+  // Update the user's role if it is different from the current role
+  private async updateRoleIfDifferent(
+    tx: Prisma.TransactionClient,
+    permission: { role: string },
+    newRole: string,
+    cookbookId: number,
+    userId: number,
+  ) {
+    if (permission.role !== newRole) {
+      await tx.usersOnCookBooks.update({
+        where: { cookbookId_userId: { userId, cookbookId } },
+        data: { role: newRole },
+      });
+    }
+  }
+
 
 }

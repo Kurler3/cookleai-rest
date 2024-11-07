@@ -17,6 +17,7 @@ import { UpdateCookbookDto } from './dto/update-cookbook.dto';
 import { AddMembersDto } from './dto/add-members.dto';
 import { RemoveRecipeDto } from './dto/remove-recipe.dto';
 import { EditMembersDto } from './dto/edit-members.dto';
+import { RemoveMembersDto } from './dto/remove-members.dto';
 
 @UseGuards(JwtGuard)
 @Controller('cookbooks')
@@ -144,7 +145,22 @@ export class CookbookController {
     );
   }
 
-  //TODO Remove members.
+  // Remove members.
+  @UseGuards(CookbookRolesGuard)
+  @CookbookRoles([COOKBOOK_ROLES.OWNER])
+  @Delete(':cookbookId/remove-members')
+  removeMembers(
+    @GetUser('id') currentUserId: number,
+    @Param('cookbookId') cookbookId: string,
+    @Body() body: RemoveMembersDto,
+  ) {
+    return this.cookbookService.removeMembers(
+      currentUserId,
+      +cookbookId,
+      body,
+    );
+  }
+
 
   // Get recipes for the cookbook
   @UseGuards(CookbookRolesGuard)
