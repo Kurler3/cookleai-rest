@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, UseFilters } from '@nestjs/common';
+import { BadRequestException, Injectable, UnauthorizedException, UseFilters } from '@nestjs/common';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { UpdateRecipeDto } from './dto/update-recipe.dto';
 import { PrismaService } from '../prisma/prisma.service';
@@ -11,6 +11,8 @@ import { GeminiService } from 'src/gemini/gemini.service';
 import { QuotaService } from '../quota/quota.service';
 import { IFindMyRecipesInput } from "../types/recipe.type";
 import { ConfigService } from '@nestjs/config';
+import { UserService } from '../user/user.service';
+import { AddMembersToRecipeDto } from './dto/add-members-to-recipe.dto';
 
 @Injectable()
 export class RecipeService {
@@ -21,6 +23,7 @@ export class RecipeService {
     private geminiService: GeminiService,
     private quotaService: QuotaService,
     private configService: ConfigService,
+    private userService: UserService,
   ) { }
 
   async updateRecipe(
@@ -433,4 +436,92 @@ export class RecipeService {
     }
   }
 
+  // Add members
+  async addMembers(
+    currentUserId: number,
+    recipeId: number,
+    body: AddMembersToRecipeDto,
+  ) {
+
+    // Start a transaction
+    try {
+      await this.prismaService.$transaction(async (tx) => {
+
+        await Promise.all(
+          body.members.map(async ({ role, userId }) => {
+
+            // Assert not current user.
+            this.userService.assertNotCurrentUser(
+              currentUserId, 
+              userId, 
+              'You cannot edit yourself',
+            );
+
+            // Check if the user exists
+            await this.userService.assertUserExists(tx, userId);
+            
+            // Get recipe permission for user being added to check if he already exists or not
+            const recipePermission = await this.getRecipePermission(tx, recipeId, userId);
+
+            if (!recipePermission) {
+
+              // Create the membership record if the user is not already a member
+              await tx.usersOnRecipes.create({
+                data: {
+                  recipe: {
+                    connect: {
+                      id: recipeId,
+                    }
+                  },
+                  user: {
+                    connect: {
+                      id: userId,
+                    }
+                  },
+                  role,
+                  addedBy: currentUserId,
+                },
+              });
+            }
+
+          })
+        )
+
+      });
+
+      // Return success message
+      return { message: 'Members added successfully.' };
+
+    } catch (error) {
+
+      console.error('Error while adding members:', error);
+      throw error;
+
+    }
+
+
+  }
+
+  //TODO: Edit members
+
+  //TODO: Remove members
+
+
+
+  // Get the user's current role in the recipe, or throw an error if not a member
+  private async getRecipePermission(
+    tx: Prisma.TransactionClient,
+    recipeId: number,
+    userId: number,
+    throwErrIfNoPermission?: boolean,
+  ) {
+    const permission = await tx.usersOnRecipes.findUnique({
+      where: { recipeId_userId: { userId, recipeId } },
+    });
+
+    if (throwErrIfNoPermission && !permission) {
+      throw new BadRequestException(`User with ID ${userId} is not a member of this recipeId`);
+    }
+    return permission;
+  }
 }

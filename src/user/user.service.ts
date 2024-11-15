@@ -11,7 +11,7 @@ export class UserService {
     private prismaService: PrismaService,
     private recipeService: RecipeService,
     private quotaService: QuotaService,
-  ) {}
+  ) { }
 
   // Create user
   async createUser(createUserDto: CreateUserDto) {
@@ -40,16 +40,16 @@ export class UserService {
 
   // Get all recipes for a given user
   async getUserRecipes(userId: number) {
-    return this.recipeService.findMyRecipes({userId});
+    return this.recipeService.findMyRecipes({ userId });
   }
 
   // Get all quota of user
   async getQuotas(userId: number) {
-   
+
     const quotas = await this.prismaService.userQuota.findMany({
-        where: {
-            userId,
-        },
+      where: {
+        userId,
+      },
     });
 
     return quotas;
@@ -63,7 +63,7 @@ export class UserService {
     searchValue: string,
   ) {
 
-    if(!searchValue) {
+    if (!searchValue) {
       throw new BadRequestException('You need to provide a search term.');
     }
 
@@ -87,4 +87,19 @@ export class UserService {
 
     return users;
   }
+
+  // Verify the user exists in the database
+  async assertUserExists(tx: Prisma.TransactionClient, userId: number) {
+    const user = await tx.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      throw new BadRequestException(`User with ID ${userId} does not exist`);
+    }
+  }
+
+  assertNotCurrentUser(currentUserId: number, userId: number, errMsg: string) {
+    if (currentUserId === userId) {
+      throw new BadRequestException(errMsg);
+    }
+  }
+
 }

@@ -29,6 +29,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { RecipeRoles } from 'src/decorators/RecipeRoles.decorator';
 import { CreateRecipeWithAiDto } from './dto/create-recipe-with-ai.dto';
 import { User } from '@prisma/client';
+import { AddMembersToRecipeDto } from './dto/add-members-to-recipe.dto';
 
 @UseGuards(JwtGuard)
 @Controller('recipes')
@@ -114,6 +115,27 @@ export class RecipeController {
   ) {
     return this.recipeService.editRecipeImage(recipeId, img);
   }
+
+  // Add members to recipe.
+  @UseGuards(RecipeRolesGuard)
+  @RecipeRoles([RECIPE_ROLES.OWNER])
+  @Post(':recipeId/add-members')
+  addMembers(
+    @GetUser('id') currentUserId: number,
+    @Param('recipeId') recipeId: string,
+    @Body() body: AddMembersToRecipeDto,
+  ) {
+    return this.recipeService.addMembers(
+      currentUserId,
+      +recipeId,
+      body,
+    );
+  }
+
+
+  //TODO: Edit members in recipe.
+
+  //TODO: Remove members from recipe.
 
   //TODO: Find public recipes (for explore page)
 }

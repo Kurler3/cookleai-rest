@@ -11,6 +11,7 @@ import { AddMembersDto } from './dto/add-members.dto';
 import { IGetCookbookRecipesInput } from '../types/cookbook.types';
 import { EditMembersDto } from './dto/edit-members.dto';
 import { RemoveMembersDto } from './dto/remove-members.dto';
+import { UserService } from '../user/user.service';
 
 @Injectable()
 export class CookbookService {
@@ -20,6 +21,7 @@ export class CookbookService {
     private prismaService: PrismaService,
     private supabaseService: SupabaseService,
     private configService: ConfigService,
+    private userService: UserService,
   ) { }
 
   // Add recipe to cookbook.
@@ -326,11 +328,15 @@ export class CookbookService {
         await Promise.all(
           body.members.map(async ({ role, userId }) => {
 
-            // Check if user is not the same.
-            this.assertNotCurrentUser(currentUserId, userId);
+            // Assert not current user.
+            this.userService.assertNotCurrentUser(
+              currentUserId, 
+              userId, 
+              'You cannot edit yourself',
+            );
 
             // Check if the user exists
-            await this.assertUserExists(tx, userId);
+            await this.userService.assertUserExists(tx, userId);
             
             // Get cookbook permission for user being added to check if he already exists or not
             const cookbookPermission = await this.getCookbookPermission(tx, cookbookId, userId);
@@ -561,10 +567,14 @@ export class CookbookService {
   ) {
 
      // Check that the user is not trying to delete himself.
-    this.assertNotCurrentUser(currentUserId, userId);
+    this.userService.assertNotCurrentUser(
+      currentUserId, 
+      userId, 
+      'You can\'t delete yourself!'
+    );
 
     // Check that the user actually exists.
-    await this.assertUserExists(tx, userId);
+    await this.userService.assertUserExists(tx, userId);
 
     // Get the current permission for the user being deleted in this cookbook
     const permission = await this.getCookbookPermission(tx, cookbookId, userId, true);
@@ -603,10 +613,14 @@ export class CookbookService {
   ) {
 
     // Check that the user is not trying to edit himself.
-    this.assertNotCurrentUser(currentUserId, userId);
+    this.userService.assertNotCurrentUser(
+      currentUserId, 
+      userId, 
+      'You cannot edit yourself'
+    );
 
     // Check that the user actually exists.
-    await this.assertUserExists(tx, userId);
+    await this.userService.assertUserExists(tx, userId);
 
     // Get the current permission for the user being edited in this cookbook
     const permission = await this.getCookbookPermission(tx, cookbookId, userId, true);
@@ -614,21 +628,6 @@ export class CookbookService {
     // Update the role if needed
     await this.updateRoleIfDifferent(tx, permission, role, cookbookId, userId);
 
-  }
-
-  // Throw an error if the user is trying to edit their own role
-  private assertNotCurrentUser(currentUserId: number, userId: number) {
-    if (currentUserId === userId) {
-      throw new BadRequestException('You cannot edit yourself');
-    }
-  }
-
-  // Verify the user exists in the database
-  private async assertUserExists(tx: Prisma.TransactionClient, userId: number) {
-    const user = await tx.user.findUnique({ where: { id: userId } });
-    if (!user) {
-      throw new BadRequestException(`User with ID ${userId} does not exist`);
-    }
   }
 
   // Get the user's current role in the cookbook, or throw an error if not a member
