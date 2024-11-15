@@ -4,6 +4,7 @@ import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/
 import { ConfigService } from '@nestjs/config';
 import { UserService } from 'src/user/user.service';
 import { SupabaseService } from '../../supabase/supabase.service';
+import { AVATAR_KEYS } from '../../utils/constants';
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
@@ -49,7 +50,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
           firstName: name.givenName,
           lastName: name.familyName,
           fullName: `${name.givenName} ${name.familyName}`,
-          avatar:  photos[0].value,
+          avatar:  AVATAR_KEYS[Math.floor(Math.random() * AVATAR_KEYS.length)] //?? photos[0].value,
         })
 
         // const {

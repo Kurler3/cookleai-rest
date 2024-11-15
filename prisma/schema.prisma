@@ -88,9 +88,9 @@ model CookBook {
 
   // Updated by and created by
   updatedBy     Int
-  updatedByUser User @relation("UserUpdateCookbook", fields: [updatedBy], references: [id])
+  updatedByUser User @relation("UserUpdateCookbook", fields: [updatedBy], references: [id], onDelete: Cascade)
   createdBy     Int
-  createdByUser User @relation("UserCreateCookbook", fields: [createdBy], references: [id])
+  createdByUser User @relation("UserCreateCookbook", fields: [createdBy], references: [id], onDelete: Cascade)
 
   // Map
   @@map("cookbooks")
@@ -126,9 +126,9 @@ model Recipe {
 
   // Updated by and created by
   updatedBy     Int
-  updatedByUser User @relation("UserUpdateRecipe", fields: [updatedBy], references: [id])
+  updatedByUser User @relation("UserUpdateRecipe", fields: [updatedBy], references: [id], onDelete: Cascade)
   createdBy     Int
-  createdByUser User @relation("UserCreateRecipe", fields: [createdBy], references: [id])
+  createdByUser User @relation("UserCreateRecipe", fields: [createdBy], references: [id], onDelete: Cascade)
 
   @@map("recipes")
 }
