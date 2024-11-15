@@ -1,7 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateUserDto } from './dto/createUser.dto';
-import { RecipeService } from 'src/recipe/recipe.service';
 import { Prisma } from '@prisma/client';
 import { QuotaService } from 'src/quota/quota.service';
 
@@ -9,7 +8,6 @@ import { QuotaService } from 'src/quota/quota.service';
 export class UserService {
   constructor(
     private prismaService: PrismaService,
-    private recipeService: RecipeService,
     private quotaService: QuotaService,
   ) { }
 
@@ -36,11 +34,6 @@ export class UserService {
         id,
       },
     });
-  }
-
-  // Get all recipes for a given user
-  async getUserRecipes(userId: number) {
-    return this.recipeService.findMyRecipes({ userId });
   }
 
   // Get all quota of user

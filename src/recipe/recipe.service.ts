@@ -1,9 +1,8 @@
-import { BadRequestException, Injectable, UnauthorizedException, UseFilters } from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { UpdateRecipeDto } from './dto/update-recipe.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { ENV_VARS, RECIPE_ROLES } from 'src/utils/constants';
-import { IPagination } from 'src/types';
 import { Prisma, Recipe, User, UsersOnRecipes } from '@prisma/client';
 import { SupabaseService } from 'src/supabase/supabase.service';
 import { v4 as uuid } from 'uuid';
@@ -25,6 +24,12 @@ export class RecipeService {
     private configService: ConfigService,
     private userService: UserService,
   ) { }
+
+  // Get all recipes for a given user
+  async getUserRecipes(userId: number) {
+    return this.findMyRecipes({ userId });
+  }
+
 
   async updateRecipe(
     recipeId: number,
