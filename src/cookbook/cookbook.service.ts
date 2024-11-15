@@ -567,7 +567,7 @@ export class CookbookService {
     await this.assertUserExists(tx, userId);
 
     // Get the current permission for the user being deleted in this cookbook
-    const permission = await this.getCookbookPermission(tx, cookbookId, userId);
+    const permission = await this.getCookbookPermission(tx, cookbookId, userId, true);
 
     // Delete the permission
     await this.deleteMember(tx, cookbookId, userId, permission);
@@ -609,7 +609,7 @@ export class CookbookService {
     await this.assertUserExists(tx, userId);
 
     // Get the current permission for the user being edited in this cookbook
-    const permission = await this.getCookbookPermission(tx, cookbookId, userId);
+    const permission = await this.getCookbookPermission(tx, cookbookId, userId, true);
     
     // Update the role if needed
     await this.updateRoleIfDifferent(tx, permission, role, cookbookId, userId);
@@ -636,11 +636,13 @@ export class CookbookService {
     tx: Prisma.TransactionClient,
     cookbookId: number,
     userId: number,
+    throwErrIfNoPermission?: boolean,
   ) {
     const permission = await tx.usersOnCookBooks.findUnique({
       where: { cookbookId_userId: { userId, cookbookId } },
     });
-    if (!permission) {
+
+    if (throwErrIfNoPermission && !permission) {
       throw new BadRequestException(`User with ID ${userId} is not a member of this cookbook`);
     }
     return permission;
