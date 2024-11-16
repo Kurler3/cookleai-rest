@@ -131,6 +131,14 @@ export class RecipeService {
       },
       include: {
         createdByUser: true,
+
+        // Get the users and their role on this recipe.
+        users: {
+          select: {
+            user: true,
+            role: true,
+          } 
+        }
       }
     });
 

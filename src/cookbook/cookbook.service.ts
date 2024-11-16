@@ -257,7 +257,8 @@ export class CookbookService {
     return {
       ...cookbook,
       role,
-    }
+    };
+    
   }
 
   // Update
