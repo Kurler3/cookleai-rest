@@ -10,6 +10,7 @@ import { CookbookModule } from './cookbook/cookbook.module';
 import { SupabaseModule } from './supabase/supabase.module';
 import { GeminiModule } from './gemini/gemini.module';
 import { QuotaModule } from './quota/quota.module';
+import { MembershipService } from './membership/membership.service';
 
 @Module({
   imports: [
@@ -26,6 +27,6 @@ import { QuotaModule } from './quota/quota.module';
     QuotaModule
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, MembershipService],
 })
 export class AppModule {}

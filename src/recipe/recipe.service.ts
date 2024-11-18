@@ -12,6 +12,7 @@ import { IFindMyRecipesInput } from "../types/recipe.type";
 import { ConfigService } from '@nestjs/config';
 import { UserService } from '../user/user.service';
 import { AddMembersToRecipeDto } from './dto/add-members-to-recipe.dto';
+import { EditMembersOfRecipeDto } from './dto/edit-members-of-recipe.dto';
 
 @Injectable()
 export class RecipeService {
@@ -516,6 +517,23 @@ export class RecipeService {
   }
 
   //TODO: Edit members
+  async editMembers(
+    currentUserId: number,
+    recipeId: number,
+    editMembersOfRecipeDto: EditMembersOfRecipeDto
+  ) {
+    await this.prismaService.$transaction(async (tx) => {
+
+      await Promise.all(
+        editMembersOfRecipeDto.members.map(async (editedMember) => {
+
+          //TODO: Update the member role.
+
+        })
+      );
+
+    });
+  }
 
   //TODO: Remove members
 
@@ -537,4 +555,48 @@ export class RecipeService {
     }
     return permission;
   }
+
+
+  // Helper function to update a single member's role
+  private async updateMemberRole(
+    tx: Prisma.TransactionClient,
+    currentUserId: number,
+    recipeId: number,
+    { userId, role }: { userId: number, role: string },
+  ) {
+
+    // Check that the user is not trying to edit himself.
+    this.userService.assertNotCurrentUser(
+      currentUserId, 
+      userId, 
+      'You cannot edit yourself'
+    );
+
+    // Check that the user actually exists.
+    await this.userService.assertUserExists(tx, userId);
+
+    // Get the current permission for the user being edited in this cookbook
+    const permission = await this.getRecipePermission(tx, recipeId, userId, true);
+    
+    // Update the role if needed
+    await this.updateRoleIfDifferent(tx, permission, role, recipeId, userId);
+
+  }
+
+  // Update the user's role if it is different from the current role
+  private async updateRoleIfDifferent(
+    tx: Prisma.TransactionClient,
+    permission: { role: string },
+    newRole: string,
+    recipeId: number,
+    userId: number,
+  ) {
+    if (permission.role !== newRole) {
+      await tx.usersOnRecipes.update({
+        where: { recipeId_userId: { userId, recipeId } },
+        data: { role: newRole },
+      });
+    }
+  }
+
 }
