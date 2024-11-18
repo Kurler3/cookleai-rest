@@ -16,7 +16,6 @@ import { UserService } from '../user/user.service';
 @Injectable()
 export class CookbookService {
 
-
   constructor(
     private prismaService: PrismaService,
     private supabaseService: SupabaseService,
