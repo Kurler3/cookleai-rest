@@ -2,6 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { User } from '@prisma/client';
+import { Response } from 'express';
 
 @Injectable()
 export class AuthService {
@@ -55,4 +56,17 @@ export class AuthService {
       throw new UnauthorizedException('Invalid refresh token');
     }
   }
+
+  logout(
+    res: Response
+  ) {
+    res.clearCookie('refreshToken', {
+      httpOnly: true,
+      secure: false,     // Or true if the cookie was set in production with HTTPS
+      // sameSite: 'none',
+      path: '/',         
+    });
+
+  }
+
 }

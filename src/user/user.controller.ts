@@ -1,14 +1,17 @@
-import { Controller, Get, UseGuards, Query } from '@nestjs/common';
+import { Controller, Get, UseGuards, Query, Delete, Res } from '@nestjs/common';
 import { JwtGuard } from 'src/auth/guard/jwt-auth.guard';
 import { GetUser } from './decorator/user.decorator';
 import { User } from '@prisma/client';
 import { UserService } from './user.service';
+import { Response } from 'express';
 
 @UseGuards(JwtGuard)
 @Controller('users')
 export class UserController {
 
-    constructor(private userService: UserService) {}
+    constructor(
+        private userService: UserService,
+    ) {}
 
     // Get user from token
     @Get('me')
@@ -31,6 +34,27 @@ export class UserController {
         @Query('search') searchValue: string,
     ) {
         return this.userService.search(searchValue);
+    }
+
+    // Delete own account.
+    @Delete('delete-account')
+    async deleteAccount(
+        @GetUser('id') userId: number,
+        @Res() res: Response
+    ) {
+
+        await this.userService.deleteAccount(userId);
+
+        res.clearCookie('refreshToken', {
+            httpOnly: true,
+            secure: false,     // Or true if the cookie was set in production with HTTPS
+            // sameSite: 'none',
+            path: '/',         
+          });
+    
+        return {
+            message: 'Your account has been deleted successfully!'        
+        }
     }
 
 }

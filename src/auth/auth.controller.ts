@@ -69,12 +69,7 @@ export class AuthController {
   @Post('logout')
   logout(@Res() res: Response) {
 
-    res.clearCookie('refreshToken', {
-      httpOnly: true,
-      secure: false,     // Or true if the cookie was set in production with HTTPS
-      // sameSite: 'none',
-      path: '/',         
-    });
+    this.authService.logout(res);
 
     return res.status(200).json({ message: 'Logged out successfully' });
   }
