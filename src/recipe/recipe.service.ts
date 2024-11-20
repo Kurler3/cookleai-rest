@@ -1,4 +1,4 @@
-import { BadRequestException, forwardRef, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { UpdateRecipeDto } from './dto/update-recipe.dto';
 import { PrismaService } from '../prisma/prisma.service';
@@ -13,6 +13,8 @@ import { ConfigService } from '@nestjs/config';
 import { UserService } from '../user/user.service';
 import { AddMembersToRecipeDto } from './dto/add-members-to-recipe.dto';
 import { EditMembersOfRecipeDto } from './dto/edit-members-of-recipe.dto';
+import { MembershipService } from '../membership/membership.service';
+import { RemoveMembersFromRecipeDto } from './dto/remove-members-from-recipe.dto';
 
 @Injectable()
 export class RecipeService {
@@ -24,6 +26,7 @@ export class RecipeService {
     private quotaService: QuotaService,
     private configService: ConfigService,
     private userService: UserService,
+    private membershipService: MembershipService,
   ) { }
 
   // Get all recipes for a given user
@@ -457,146 +460,43 @@ export class RecipeService {
     body: AddMembersToRecipeDto,
   ) {
 
-    // Start a transaction
-    try {
-      await this.prismaService.$transaction(async (tx) => {
-
-        await Promise.all(
-          body.members.map(async ({ role, userId }) => {
-
-            // Assert not current user.
-            this.userService.assertNotCurrentUser(
-              currentUserId, 
-              userId, 
-              'You cannot edit yourself',
-            );
-
-            // Check if the user exists
-            await this.userService.assertUserExists(tx, userId);
-            
-            // Get recipe permission for user being added to check if he already exists or not
-            const recipePermission = await this.getRecipePermission(tx, recipeId, userId);
-
-            if (!recipePermission) {
-
-              // Create the membership record if the user is not already a member
-              await tx.usersOnRecipes.create({
-                data: {
-                  recipe: {
-                    connect: {
-                      id: recipeId,
-                    }
-                  },
-                  user: {
-                    connect: {
-                      id: userId,
-                    }
-                  },
-                  role,
-                  addedBy: currentUserId,
-                },
-              });
-            }
-
-          })
-        )
-
-      });
-
-      // Return success message
-      return { message: 'Members added successfully.' };
-
-    } catch (error) {
-
-      console.error('Error while adding members:', error);
-      throw error;
-
-    }
-
+    return await this.membershipService.addMembers(
+      'recipe',
+      currentUserId,
+      recipeId,
+      body,
+    );
 
   }
 
-  //TODO: Edit members
+  // Edit members
   async editMembers(
     currentUserId: number,
     recipeId: number,
     editMembersOfRecipeDto: EditMembersOfRecipeDto
   ) {
-    await this.prismaService.$transaction(async (tx) => {
-
-      await Promise.all(
-        editMembersOfRecipeDto.members.map(async (editedMember) => {
-
-          //TODO: Update the member role.
-
-        })
-      );
-
-    });
+  
+    return await this.membershipService.editMembers(
+      'recipe',
+      currentUserId,
+      recipeId,
+      editMembersOfRecipeDto,
+    );
+  
   }
 
-  //TODO: Remove members
-
-
-
-  // Get the user's current role in the recipe, or throw an error if not a member
-  private async getRecipePermission(
-    tx: Prisma.TransactionClient,
-    recipeId: number,
-    userId: number,
-    throwErrIfNoPermission?: boolean,
-  ) {
-    const permission = await tx.usersOnRecipes.findUnique({
-      where: { recipeId_userId: { userId, recipeId } },
-    });
-
-    if (throwErrIfNoPermission && !permission) {
-      throw new BadRequestException(`User with ID ${userId} is not a member of this recipeId`);
-    }
-    return permission;
-  }
-
-
-  // Helper function to update a single member's role
-  private async updateMemberRole(
-    tx: Prisma.TransactionClient,
+  // Remove members
+  async removeMembers(
     currentUserId: number,
     recipeId: number,
-    { userId, role }: { userId: number, role: string },
+    removeMembersFromRecipeDto: RemoveMembersFromRecipeDto,
   ) {
-
-    // Check that the user is not trying to edit himself.
-    this.userService.assertNotCurrentUser(
-      currentUserId, 
-      userId, 
-      'You cannot edit yourself'
+    return await this.membershipService.removeMembers(
+      'recipe',
+      currentUserId,
+      recipeId,
+      removeMembersFromRecipeDto,
     );
-
-    // Check that the user actually exists.
-    await this.userService.assertUserExists(tx, userId);
-
-    // Get the current permission for the user being edited in this cookbook
-    const permission = await this.getRecipePermission(tx, recipeId, userId, true);
-    
-    // Update the role if needed
-    await this.updateRoleIfDifferent(tx, permission, role, recipeId, userId);
-
-  }
-
-  // Update the user's role if it is different from the current role
-  private async updateRoleIfDifferent(
-    tx: Prisma.TransactionClient,
-    permission: { role: string },
-    newRole: string,
-    recipeId: number,
-    userId: number,
-  ) {
-    if (permission.role !== newRole) {
-      await tx.usersOnRecipes.update({
-        where: { recipeId_userId: { userId, recipeId } },
-        data: { role: newRole },
-      });
-    }
   }
 
 }

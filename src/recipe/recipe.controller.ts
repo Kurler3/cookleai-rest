@@ -31,6 +31,7 @@ import { CreateRecipeWithAiDto } from './dto/create-recipe-with-ai.dto';
 import { User } from '@prisma/client';
 import { AddMembersToRecipeDto } from './dto/add-members-to-recipe.dto';
 import { EditMembersOfRecipeDto } from './dto/edit-members-of-recipe.dto';
+import { RemoveMembersFromRecipeDto } from './dto/remove-members-from-recipe.dto';
 
 @UseGuards(JwtGuard)
 @Controller('recipes')
@@ -150,9 +151,21 @@ export class RecipeController {
     );
   }
 
-  //TODO: Remove members from recipe.
-
-
+  // Remove members from recipe.
+  @UseGuards(RecipeRolesGuard)
+  @RecipeRoles([RECIPE_ROLES.OWNER])
+  @Delete(':recipeId/remove-members')
+  removeMembers(
+    @GetUser('id') userId: number,
+    @Param('recipeId') recipeId: string,
+    @Body() removeMembersFromRecipeDto: RemoveMembersFromRecipeDto
+  ) {
+    return this.recipeService.removeMembers(
+      userId,
+      +recipeId,
+      removeMembersFromRecipeDto,
+    );
+  }
 
   //TODO: Find public recipes (for explore page)
 }
