@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Global, Injectable } from '@nestjs/common';
 import { UserService } from '../user/user.service';
 import { Prisma, UsersOnCookBooks, UsersOnRecipes } from '@prisma/client';
 import { AddMembersDto } from '../cookbook/dto/add-members.dto';
@@ -11,6 +11,7 @@ import { RemoveMembersFromRecipeDto } from '../recipe/dto/remove-members-from-re
 
 type IEntityType = 'cookbook' | 'recipe';
 
+@Global()
 @Injectable()
 export class MembershipService {
 

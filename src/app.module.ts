@@ -11,6 +11,7 @@ import { SupabaseModule } from './supabase/supabase.module';
 import { GeminiModule } from './gemini/gemini.module';
 import { QuotaModule } from './quota/quota.module';
 import { MembershipService } from './membership/membership.service';
+import { MembershipModule } from './membership/membership.module';
 
 @Module({
   imports: [
@@ -24,7 +25,8 @@ import { MembershipService } from './membership/membership.service';
     CookbookModule,
     SupabaseModule,
     GeminiModule,
-    QuotaModule
+    QuotaModule,
+    MembershipModule
   ],
   controllers: [AppController],
   providers: [AppService, MembershipService],
