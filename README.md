@@ -1,73 +1,80 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
-</p>
+# Cookle AI - Backend
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Project Overview
 
-## Description
+  The backend of Cookle AI serves as the core engine for handling user authentication, recipe and cookbook management, and integrations with AI via the Gemini API. Built with NestJS, it employs Prisma for database ORM, Supabase for storage, and Google OAuth for user authentication. It runs in a Dockerized environment, using PostgreSQL as the database.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Features
 
-## Installation
+* Google OAuth: Secure user authentication using Google login.
+* AI Integration: Communicate with the Gemini API for recipe generation.
+* Cookbook Management: Backend APIs to manage recipes and cookbooks, including permission controls.
+* Image Storage: Utilizes Supabase for handling both public and private image storage.
+* Scalable Architecture: Built with modular NestJS features, making it easy to extend and maintain.
+* Dockerized Deployment: Simplifies deployment with Docker and PostgreSQL.
 
-```bash
-$ npm install
-```
+## Technologies Used
 
-## Running the app
+* NestJS: A progressive Node.js framework for building efficient server-side applications.
+* Prisma: ORM for easy and efficient database interaction.
+* Supabase: For image storage and secure server-side operations.
+* Google OAuth: For seamless and secure user authentication.
+* PostgreSQL: Relational database for persistent data storage.
+* Docker: To containerize the application for easy deployment.
 
-```bash
-# development
-$ npm run start
+## Environment Variables
 
-# watch mode
-$ npm run start:dev
+  The backend requires the following environment variables to function properly. Create a .env file in the root of the project and add the following keys:
+    
+  * DATABASE_URL: Url of the database.
+  * GOOGLE_CLIENT_ID: Client id from google
+  * GOOGLE_CLIENT_SECRET: Client secret from google.
+  * JWT_SECRET: Secret used to sign jwt tokens.
+  * FRONTEND_URL: Url of the frontend.
+  * SUPABASE_URL: Url of your project in supabase.
+  * SUPABASE_SERVICE_ROLE_KEY: Key of the service role in supabase.
+  * PUBLIC_IMAGES_BUCKET: Public images bucket name from supabase.
+  * PRIVATE_IMAGES_BUCKET: Private images bucket name from supabase.
+  * GEMINI_API_KEY: Gemini API key.
 
-# production mode
-$ npm run start:prod
-```
+## Installation Instructions
 
-## Test
+1. Clone the Repository
+  Start by cloning the repository to your local machine:
 
-```bash
-# unit tests
-$ npm run test
+    `git clone https://github.com/Kurler3/cookleai-rest.git`
 
-# e2e tests
-$ npm run test:e2e
+2. Install Dependencies
+  Navigate into the backend directory and install dependencies:
 
-# test coverage
-$ npm run test:cov
-```
+    `cd cookleai-rest`
+    <br>
+    `npm install`
 
-## Support
+3. Set Up Environment Variables
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+    Create a .env file in the root directory and add the required environment variables as specified above.
 
-## Stay in touch
+4. Run the Development Server
+  
+    Run the server locally:
 
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+    `npm run start:dev`
 
-## License
+    This will create a docker image and run it in a container.
 
-Nest is [MIT licensed](LICENSE).
+## Database Setup
+  
+### Prisma Migrations: Run the following command to set up your database schema:
+
+  `npx prisma migrate dev`
+
+  This applies migrations and updates your database schema.
+
+### Prisma Studio (optional): Launch Prisma Studio to visualize and manage your data:
+
+  `npx prisma studio`
+
+
+  
